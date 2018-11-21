@@ -182,5 +182,5 @@ model.load_weights(COCO_MODEL_DIR, by_name=True,
 
 model.train(dataset_train, dataset_val, 
             learning_rate=config.LEARNING_RATE, 
-            epochs=1, 
+            epochs=100, 
             layers='heads')

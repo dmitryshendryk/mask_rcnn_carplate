@@ -167,10 +167,20 @@ dataset_val = ShapesDataset()
 dataset_val.load_shapes(50, config.IMAGE_SHAPE[0], config.IMAGE_SHAPE[1])
 dataset_val.prepare()
 
-print(dataset_train)
-# Load and display random samples
-image_ids = np.random.choice(dataset_train.image_ids, 4)
-for image_id in image_ids:
-    image = dataset_train.load_image(image_id)
-    mask, class_ids = dataset_train.load_mask(image_id)
-    visualize.display_top_masks(image, mask, class_ids, dataset_train.class_names)
+# # Load and display random samples
+# image_ids = np.random.choice(dataset_train.image_ids, 4)
+# for image_id in image_ids:
+#     image = dataset_train.load_image(image_id)
+#     mask, class_ids = dataset_train.load_mask(image_id)
+#     visualize.display_top_masks(image, mask, class_ids, dataset_train.class_names)
+
+model = modellib.MaskRCNN(mode='training', config=config, model_dir=MODEL_DIR)
+
+model.load_weights(COCO_MODEL_DIR, by_name=True,
+                       exclude=["mrcnn_class_logits", "mrcnn_bbox_fc", 
+                                "mrcnn_bbox", "mrcnn_mask"])
+
+model.train(dataset_train, dataset_val, 
+            learning_rate=config.LEARNING_RATE, 
+            epochs=1, 
+            layers='heads')

@@ -1,6 +1,7 @@
 import os 
 import sys 
 from utils import *
+import mrcnn.model as modellib
 
 class InferenceConfig(ShapeConfig):
     GPU_COUNT = 1

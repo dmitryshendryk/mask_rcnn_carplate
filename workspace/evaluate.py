@@ -1,6 +1,8 @@
 import numpy as np 
 import train as tr 
 
+from utils import *
+
 # Compute VOC-Style mAP @ IoU=0.5
 # Running on 10 images. Increase for better accuracy.
 image_ids = np.random.choice(dataset_val.image_ids, 10)
@@ -8,11 +10,11 @@ APs = []
 for image_id in image_ids:
     # Load image and ground truth data
     image, image_meta, gt_class_id, gt_bbox, gt_mask =\
-        tr.modellib.load_image_gt(dataset_val, inference_config,
+        modellib.load_image_gt(dataset_val, inference_config,
                                image_id, use_mini_mask=False)
-    molded_images = np.expand_dims(tr.modellib.mold_image(image, inference_config), 0)
+    molded_images = np.expand_dims(modellib.mold_image(image, inference_config), 0)
     # Run object detection
-    results = tr.model.detect([image], verbose=0)
+    results = model.detect([image], verbose=0)
     r = results[0]
     # Compute AP
     AP, precisions, recalls, overlaps =\

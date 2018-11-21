@@ -8,37 +8,12 @@ import math
 import cv2
 import matplotlib.pyplot as plt 
 
-ROOT_DIR = os.path.abspath('../')
 
-sys.path.append(ROOT_DIR)
+from utils import *
 from mrcnn import utils
-from mrcnn.config import Config 
 import mrcnn.model as modellib
 from mrcnn import visualize
 
-
-MODEL_DIR = os.path.join(ROOT_DIR, 'logs')
-COCO_MODEL_DIR = os.path.join(ROOT_DIR, 'mask_rcnn_coco.h5')
-
-
-class ShapeConfig(Config):
-
-    NAME = 'shapes'
-    CPU_COUNT = 1
-    IMAGES_PER_GPU = 1
-
-    NUM_CLASSES = 1 + 3
-
-    IMAGE_MIN_DIM = 128
-    IMAGE_MAX_DIM = 128
-
-    RPN_ANCHOR_SCALES = (8,16,32,64,128)
-
-    TRAIN_ROIS_PER_IMAGE = 32 
-
-    STEPS_PER_EPOCH = 100
-
-    VALIDATION_STEPS = 5 
 
 config = ShapeConfig()
 config.display()
@@ -157,30 +132,34 @@ class ShapesDataset(utils.Dataset):
         shapes = [s for i, s in enumerate(shapes) if i in keep_ixs]
         return bg_color, shapes
 
-        # Training dataset
-dataset_train = ShapesDataset()
-dataset_train.load_shapes(500, config.IMAGE_SHAPE[0], config.IMAGE_SHAPE[1])
-dataset_train.prepare()
 
-# Validation dataset
-dataset_val = ShapesDataset()
-dataset_val.load_shapes(50, config.IMAGE_SHAPE[0], config.IMAGE_SHAPE[1])
-dataset_val.prepare()
 
-# # Load and display random samples
-# image_ids = np.random.choice(dataset_train.image_ids, 4)
-# for image_id in image_ids:
-#     image = dataset_train.load_image(image_id)
-#     mask, class_ids = dataset_train.load_mask(image_id)
-#     visualize.display_top_masks(image, mask, class_ids, dataset_train.class_names)
+if __name__ == "__main__":
 
-model = modellib.MaskRCNN(mode='training', config=config, model_dir=MODEL_DIR)
+    # Training dataset
+    dataset_train = ShapesDataset()
+    dataset_train.load_shapes(500, config.IMAGE_SHAPE[0], config.IMAGE_SHAPE[1])
+    dataset_train.prepare()
 
-model.load_weights(COCO_MODEL_DIR, by_name=True,
-                       exclude=["mrcnn_class_logits", "mrcnn_bbox_fc", 
-                                "mrcnn_bbox", "mrcnn_mask"])
+    # Validation dataset
+    dataset_val = ShapesDataset()
+    dataset_val.load_shapes(50, config.IMAGE_SHAPE[0], config.IMAGE_SHAPE[1])
+    dataset_val.prepare()
 
-model.train(dataset_train, dataset_val, 
-            learning_rate=config.LEARNING_RATE, 
-            epochs=100, 
-            layers='heads')
+    # # Load and display random samples
+    # image_ids = np.random.choice(dataset_train.image_ids, 4)
+    # for image_id in image_ids:
+    #     image = dataset_train.load_image(image_id)
+    #     mask, class_ids = dataset_train.load_mask(image_id)
+    #     visualize.display_top_masks(image, mask, class_ids, dataset_train.class_names)
+
+    model = modellib.MaskRCNN(mode='training', config=config, model_dir=MODEL_DIR)
+
+    model.load_weights(COCO_MODEL_DIR, by_name=True,
+                        exclude=["mrcnn_class_logits", "mrcnn_bbox_fc", 
+                                    "mrcnn_bbox", "mrcnn_mask"])
+
+    model.train(dataset_train, dataset_val, 
+                learning_rate=config.LEARNING_RATE, 
+                epochs=100, 
+                layers='heads')

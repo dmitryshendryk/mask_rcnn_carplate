@@ -1,9 +1,8 @@
-import train as tr 
 import os 
 import sys 
+from utils import *
 
-
-class InferenceConfig(tr.ShapesConfig):
+class InferenceConfig(ShapesConfig):
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
 
@@ -12,7 +11,7 @@ inference_config = InferenceConfig()
 # Recreate the model in inference mode
 model = modellib.MaskRCNN(mode="inference", 
                           config=inference_config,
-                          model_dir=tr.MODEL_DIR)
+                          model_dir=MODEL_DIR)
 
 # Get path to saved weights
 # Either set a specific path or find last trained weights

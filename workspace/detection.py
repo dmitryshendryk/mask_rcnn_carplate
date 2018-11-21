@@ -1,7 +1,9 @@
 import os 
 import sys 
+import random
 from utils import *
 import mrcnn.model as modellib
+from mrcnn import visualize
 
 class InferenceConfig(ShapeConfig):
     GPU_COUNT = 1

@@ -2,7 +2,7 @@ import os
 import sys 
 from utils import *
 
-class InferenceConfig(ShapesConfig):
+class InferenceConfig(ShapeConfig):
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
 

@@ -2,6 +2,7 @@ import os
 import sys 
 import numpy as np 
 import random
+import cv2
 
 ROOT_DIR = os.path.abspath('../')
 sys.path.append(ROOT_DIR)

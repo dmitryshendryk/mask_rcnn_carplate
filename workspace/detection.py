@@ -16,6 +16,10 @@ dataset_val = ShapesDataset()
 dataset_val.load_shapes(50, inference_config.IMAGE_SHAPE[0], inference_config.IMAGE_SHAPE[1])
 dataset_val.prepare()
 
+dataset_train = ShapesDataset()
+dataset_train.load_shapes(500, config.IMAGE_SHAPE[0], config.IMAGE_SHAPE[1])
+dataset_train.prepare()
+
 # Recreate the model in inference mode
 model = modellib.MaskRCNN(mode="inference", 
                           config=inference_config,

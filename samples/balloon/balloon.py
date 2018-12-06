@@ -92,7 +92,7 @@ class BalloonDataset(utils.Dataset):
         # Train or validation dataset?
         assert subset in ["train", "val"]
         dataset_dir = os.path.join(dataset_dir, subset)
-
+        print('Dataset: ', dataset_dir)
         # Load annotations
         # VGG Image Annotator (up to version 1.6) saves each image in the form:
         # { 'filename': '28503151_5b5b7ec140_b.jpg',
@@ -224,17 +224,21 @@ def detect_and_color_splash(model, image_path=None, video_path=None):
 
     # Image or video?
     if image_path:
+        imgs = os.listdir(image_path)
+        for img in imgs:
         # Run model detection and generate the color splash effect
-        print("Running on {}".format(args.image))
-        # Read image
-        image = skimage.io.imread(args.image)
-        # Detect objects
-        r = model.detect([image], verbose=1)[0]
-        # Color splash
-        splash = color_splash(image, r['masks'])
-        # Save output
-        file_name = "splash_{:%Y%m%dT%H%M%S}.png".format(datetime.datetime.now())
-        skimage.io.imsave(file_name, splash)
+            print("Running on {}".format(img))
+            # Read image
+            image = skimage.io.imread(image_path +  img)
+            # Detect objects
+            # print(image.shape)
+            # image = skimage.color.gray2rgb(image)
+            r = model.detect([image], verbose=1)[0]
+            # Color splash
+            splash = color_splash(image, r['masks'])
+            # Save output
+            file_name = "splash_{:%Y%m%dT%H%M%S}.png".format(datetime.datetime.now())
+            skimage.io.imsave(file_name, splash)
     elif video_path:
         import cv2
         # Video capture
@@ -302,12 +306,12 @@ if __name__ == '__main__':
                         help='Video to apply the color splash effect on')
     args = parser.parse_args()
 
-    # Validate arguments
-    if args.command == "train":
-        assert args.dataset, "Argument --dataset is required for training"
-    elif args.command == "splash":
-        assert args.image or args.video,\
-               "Provide --image or --video to apply color splash"
+    # # Validate arguments
+    # if args.command == "train":
+    #     assert args.dataset, "Argument --dataset is required for training"
+    # elif args.command == "splash":
+    #     assert args.image or args.video,\
+    #            "Provide --image or --video to apply color splash"
 
     print("Weights: ", args.weights)
     print("Dataset: ", args.dataset)
@@ -352,7 +356,7 @@ if __name__ == '__main__':
     print("Loading weights ", weights_path)
     if args.weights.lower() == "coco":
         # Exclude the last layers because they require a matching
-        # number of classes
+        # number of classesz
         model.load_weights(weights_path, by_name=True, exclude=[
             "mrcnn_class_logits", "mrcnn_bbox_fc",
             "mrcnn_bbox", "mrcnn_mask"])
@@ -363,8 +367,7 @@ if __name__ == '__main__':
     if args.command == "train":
         train(model)
     elif args.command == "splash":
-        detect_and_color_splash(model, image_path=args.image,
-                                video_path=args.video)
+        detect_and_color_splash(model, image_path='/home/dmitry/Documents/Projects/mask_rcnn_carplate/balloon/val')
     else:
         print("'{}' is not recognized. "
               "Use 'train' or 'splash'".format(args.command))

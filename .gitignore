@@ -65,3 +65,16 @@ assets
 images
 logs
 .DS_Store
+balloon
+car_plate_data
+coco 
+data_aug
+fonts
+real_data
+train
+true_test_characters
+val_dataset
+data_generator/bgs
+data_generator/bgs_1
+mrcnn
+samples

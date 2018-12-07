@@ -59,9 +59,9 @@ import common
 ROOT_DIR = os.path.abspath("../")
 
 FONT_DIR = "./fonts"
-FONT_HEIGHT = random.randint(10,22)  # Pixel size to which the chars are resized
+FONT_HEIGHT = random.randint(18,24)  # Pixel size to which the chars are resized
 
-OUTPUT_SHAPE = (80,170)
+OUTPUT_SHAPE = (60,130)
 
 CHARS = common.CHARS + " "
 
@@ -72,13 +72,15 @@ def make_char_ims(font_path, output_height):
     font = ImageFont.truetype(font_path, font_size)
 
     height = max(font.getsize(c)[1] for c in CHARS)
-
+    color_distrib=[180,255]
+    choose_color= color_distrib[random.randint(0,1)]
     for c in CHARS:
         width = font.getsize(c)[0]#row
         im = Image.new("RGBA", (width, height), (0, 0, 0))
 
         draw = ImageDraw.Draw(im)
-        draw.text((0, 0), c, (255, 255, 255), font=font)
+        
+        draw.text((0, 0), c, (choose_color, choose_color, choose_color), font=font)
         scale = float(output_height) / height
         im = im.resize((int(width * scale), output_height), Image.ANTIALIAS)
         yield c, numpy.array(im)[:, :, 0].astype(numpy.float32) / 255.
@@ -107,10 +109,12 @@ def euler_to_mat(yaw, pitch, roll):
 
 
 def pick_colors():
+    plate_color_pick = [200,256]
+    text_color_pick = [0,10,30]
     first = True
     while first or plate_color - text_color < 0.3:
-        text_color = random.random()
-        plate_color = random.randint(190,235)
+        text_color = 100
+        plate_color = plate_color_pick[random.randint(0,1)]
         if text_color > plate_color:
             text_color, plate_color = plate_color, text_color
         first = False
@@ -210,10 +214,10 @@ def rounded_rect(shape, radius):
 
 
 def generate_plate(font_height, char_ims):
-    h_padding = random.uniform(0.2, 0.4) * font_height
-    v_padding = random.uniform(0.1, 0.3) * font_height
-    spacing = font_height * random.uniform(-0.05, 0.05)
-    radius = 1 + int(font_height * 0.1 * random.random())
+    h_padding = random.uniform(0.1, 0.2) * font_height
+    v_padding = random.uniform(0.1, 0.2) * font_height
+    spacing = font_height * random.uniform(-0.01, 0.01)
+    radius = 1 + int(font_height * 0.1 * random.randint(1,2))
 
     code = generate_code()
     text_width = sum(char_ims[c].shape[1] for c in code)
@@ -237,18 +241,15 @@ def generate_plate(font_height, char_ims):
         ix, iy = int(x), int(y)
         text_mask[iy:iy + char_im.shape[0], ix:ix + char_im.shape[1]] = char_im
         x += char_im.shape[1] + spacing
-
         #letter
         if c!=' ':
             letter = numpy.zeros(out_shape)
             letter[iy:iy + char_im.shape[0], ix:ix + char_im.shape[1]] = char_im
             letter = letter * 255
-            # cv2.imwrite(c+'mask.jpg',letter)
             letters.append(letter)
             # letter1 = text_mask*255
-   
-    plate = (numpy.ones(out_shape) * plate_color * (1. - text_mask) +
-             numpy.ones(out_shape) * 0.01 * text_mask)
+    plate = (numpy.ones(out_shape) * plate_color * (1. - text_mask)  +
+             numpy.ones(out_shape)  * 0.01 * text_mask)
     return plate, rounded_rect(out_shape, radius), code.replace(" ", "")
 
 def generate_two_lines_plate(font_height,char_ims):
@@ -327,23 +328,9 @@ def generate_bg(num_bg_images):
 
     bg = cv2.resize(bg,(OUTPUT_SHAPE[1],OUTPUT_SHAPE[0]))
     
+
     return bg,img_name
 
-def incerease_brightness(img, value):
-    img = numpy.uint8(img)
-    print(img.shape)
-    color = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-    hsv = cv2.cvtColor(color, cv2.COLOR_RGB2HSV)
-    h,s,v = cv2.split(hsv)
-
-    lim = 255 -value
-    v[v > lim] = 255
-    v[v <= lim] += value
-
-    final_hsv = cv2.merge((h,s,v))
-    img = cv2.cvtColor(final_hsv, cv2.COLOR_HSV2BGR)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    return img
 
 def generate_im(char_ims, num_bg_images):
     bg,img_name = generate_bg(num_bg_images)
@@ -362,8 +349,8 @@ def generate_im(char_ims, num_bg_images):
 
     if random.randint(0,1) == 0:
         plate = random_zoom(plate, (0.7,1.3))
-    if random.randint(0,1) == 0:
-        plate = random_brightness(plate, (0.01,0.013))
+    # if random.randint(0,1) == 0:
+        # plate = random_brightness(plate, (0.01,0.012))
     # if random.randint(0,1) == 0:
         # plate = random_shear(plate, 10)
     
@@ -375,7 +362,7 @@ def generate_im(char_ims, num_bg_images):
     M, out_of_bounds = make_affine_transform(
                             from_shape=plate.shape,
                             to_shape=bg.shape,
-                            min_scale=0.5,
+                            min_scale=0.7,
                             max_scale=1.0,
                             rotation_variation=1.0,
                             scale_variation=0.8,
@@ -388,14 +375,13 @@ def generate_im(char_ims, num_bg_images):
     if random.randint(0,1) == 0:
         plate = cv2.blur(plate,(3,3))
     if random.randint(0,1) == 0:
-        plate = cv2.GaussianBlur(plate, (5,5),0)
+        plate = cv2.GaussianBlur(plate, (3,3),0)
 
 
     letters_Affine=[]
     index = 0
 
     plate_mask = cv2.warpAffine(plate_mask, M, (bg.shape[1], bg.shape[0]))
-
 
     out = plate * plate_mask + bg * (1.0 - plate_mask)
     out = cv2.resize(out, (OUTPUT_SHAPE[1], OUTPUT_SHAPE[0]))

@@ -45,8 +45,8 @@ class CarPlateConfig(Config):
 
     RPN_ANCHOR_RATIOS = [0.2, 0.5, 1]
 
-    IMAGE_MIN_DIM = int(256)
-    IMAGE_MAX_DIM = int(640)
+    IMAGE_MIN_DIM = int(128)
+    IMAGE_MAX_DIM = int(320)
 
 
 
@@ -795,11 +795,11 @@ def train_model(model, subfolder):
     dataset_val.prepare()
 
 
-    print("Training network heads")
+    print("Training network all")
     model.train(dataset_train, dataset_val,
                 learning_rate=config.LEARNING_RATE,
-                epochs=300,
-                layers='heads')
+                epochs=1000,
+                layers='all')
 
 
 
@@ -857,10 +857,8 @@ if __name__ == '__main__':
         print("Logs: ", os.path.join(ROOT_DIR, 'logs'))
         print("Loading weights: ", weights_path)
         
-
-        model.load_weights(weights_path, by_name=True, exclude=[
-            "mrcnn_class_logits", "mrcnn_bbox_fc",
-            "mrcnn_bbox", "mrcnn_mask"])
+        # weights_path = 'char_101.h5'
+        # model.load_weights(weights_path, by_name=True)
         train_model(model, args.dataset_train)
     
     if args.command == 'detect':

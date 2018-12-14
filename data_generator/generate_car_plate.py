@@ -54,26 +54,29 @@ import json
 
 from keras.preprocessing.image import ImageDataGenerator
 from keras.preprocessing.image import *
+
+
 import common
 
 ROOT_DIR = os.path.abspath("../")
 
+
 FONT_DIR = "./fonts"
-FONT_HEIGHT = random.randint(18,24)  # Pixel size to which the chars are resized
+
+FONT_HEIGHT = 50
 
 OUTPUT_SHAPE = (60,130)
 
 CHARS = common.CHARS + " "
 
 
-def make_char_ims(font_path, output_height):
-    font_size = output_height * 4
-
+def make_char_ims(font_path, choose_color):
+    font_size = FONT_HEIGHT * 4
     font = ImageFont.truetype(font_path, font_size)
 
     height = max(font.getsize(c)[1] for c in CHARS)
-    color_distrib=[180,255]
-    choose_color= color_distrib[random.randint(0,1)]
+    # color_distrib=[180,255]
+    # choose_color= color_distrib[random.randint(0,1)]
     for c in CHARS:
         width = font.getsize(c)[0]#row
         im = Image.new("RGBA", (width, height), (0, 0, 0))
@@ -81,8 +84,8 @@ def make_char_ims(font_path, output_height):
         draw = ImageDraw.Draw(im)
         
         draw.text((0, 0), c, (choose_color, choose_color, choose_color), font=font)
-        scale = float(output_height) / height
-        im = im.resize((int(width * scale), output_height), Image.ANTIALIAS)
+        scale = float(FONT_HEIGHT) / height
+        im = im.resize((int(width * scale), FONT_HEIGHT), Image.ANTIALIAS)
         yield c, numpy.array(im)[:, :, 0].astype(numpy.float32) / 255.
 
 
@@ -110,15 +113,15 @@ def euler_to_mat(yaw, pitch, roll):
 
 def pick_colors():
     plate_color_pick = [200,256]
-    text_color_pick = [0,10,30]
-    first = True
-    while first or plate_color - text_color < 0.3:
-        text_color = 100
-        plate_color = plate_color_pick[random.randint(0,1)]
-        if text_color > plate_color:
-            text_color, plate_color = plate_color, text_color
-        first = False
-    return text_color, plate_color/255
+    text_color = [40,90,114,255,188,random.randint(190, 210)]
+    plate_color_pick = [90,170,139,182,249,random.randint(70,120)] 
+    my_list = [0] * 13 + [1] * 13 + [2] * 21 + [3] * 20 + [4] * 10 + [5] * 33
+    number = random.choice(my_list)
+
+    return text_color[number]/255, plate_color_pick[number]/255
+
+def pick_font_hight():
+    return random.choice([22,50])
 
 
 def make_affine_transform(from_shape, to_shape, 
@@ -175,28 +178,14 @@ def generate_code_two_line():
     firstline= " {}{} ".format( random.choice(common.LETTERS), random.choice(common.LETTERS))
     secondline="{}{}{}{}".format( random.choice(common.DIGITS), random.choice(common.DIGITS), random.choice(common.DIGITS), random.choice(common.DIGITS))
     return  firstline,secondline
-    #return " DD ","0101"
 def generate_code():
-    #ormat={"{}{}{}{} {}{}{}","{}{}{}{}{}{}{}"}
     input = []
     for i in range(7):
         if random.randint(0,1)==0:
             input.append( random.choice(common.LETTERS))
-        # elif random.randint(0,2)==1:
-        #     input.append(random.choice(common.DIGITS))
         else:
             input.append(random.choice(common.DIGITS))
     return "{}{} {}{}{}{}".format(input[0],input[1],input[2],input[3],input[4],input[5],input[6])
-    #return "DD 0101"
-    # return "{}{}{}{} {}{}{}".format(
-    #     random.choice(common.LETTERS),
-    #     random.choice(common.LETTERS),
-    #     random.choice(common.DIGITS),
-    #     random.choice(common.DIGITS),
-    #     random.choice(common.LETTERS),
-    #     random.choice(common.LETTERS),
-    #     random.choice(common.LETTERS))
-
 
 def rounded_rect(shape, radius):
     out = numpy.ones(shape)
@@ -214,12 +203,25 @@ def rounded_rect(shape, radius):
 
 
 def generate_plate(font_height, char_ims):
-    h_padding = random.uniform(0.1, 0.2) * font_height
+    
+    if font_height == 50:
+        h_padding = random.uniform(0.04, 0.05) * font_height
+        v_padding = random.uniform(0.04, 0.05) * font_height
+        spacing = font_height * random.uniform(-0.01, 0.01)
+
+    h_padding = random.uniform(0.35, 0.45) * font_height
     v_padding = random.uniform(0.1, 0.2) * font_height
     spacing = font_height * random.uniform(-0.01, 0.01)
     radius = 1 + int(font_height * 0.1 * random.randint(1,2))
 
     code = generate_code()
+
+    all = code
+    max = 0
+    for c in all:
+        if char_ims[c].shape[1] > max:
+            max = char_ims[c].shape[1]
+
     text_width = sum(char_ims[c].shape[1] for c in code)
     text_width += (len(code) - 1) * spacing
 
@@ -228,34 +230,70 @@ def generate_plate(font_height, char_ims):
     
   
     text_color, plate_color = pick_colors()
+
     
     text_mask = numpy.zeros(out_shape)
+    text_mask = text_mask * (1-text_color)
+    # ig, ax = plt.subplots()
 
     x = h_padding
     y = v_padding
     count=0
     letters=[]
-    for c in code:
+    bounding_box= []
+    for c in range(len(code)):
         count+=1
-        char_im = char_ims[c]
+        char_im = char_ims[code[c]]
+        start=int(char_ims[code[c]].shape[1]/2-char_im.shape[1]/2)
+        end=int(char_ims[code[c]].shape[1]/2+char_im.shape[1]/2)
         ix, iy = int(x), int(y)
         text_mask[iy:iy + char_im.shape[0], ix:ix + char_im.shape[1]] = char_im
         x += char_im.shape[1] + spacing
         #letter
-        if c!=' ':
+        if code[c]!=' ':
             letter = numpy.zeros(out_shape)
             letter[iy:iy + char_im.shape[0], ix:ix + char_im.shape[1]] = char_im
             letter = letter * 255
             letters.append(letter)
-            # letter1 = text_mask*255
+
+            # ax.imshow(text_mask, interpolation='nearest', cmap =plt.cm.gray)
+            # plt.scatter(ix+start, iy+start)
+            # plt.scatter(ix+start, iy+start + char_im.shape[0])
+            # plt.scatter(ix+start + char_im.shape[1], iy+start)
+            # plt.scatter(ix+start + char_im.shape[1], iy+start + char_im.shape[0])
+
+            bounding_box.append([[ix+start, iy+start], [ix+start + char_im.shape[1], iy+start], [ix+start + char_im.shape[1], iy+start + char_im.shape[0]] , [ix+start, iy+start + char_im.shape[0]]])
+            
+    
     plate = (numpy.ones(out_shape) * plate_color * (1. - text_mask)  +
              numpy.ones(out_shape)  * 0.01 * text_mask)
-    return plate, rounded_rect(out_shape, radius), code.replace(" ", "")
+    
+    # fig, ax = plt.subplots()
+    # ax.imshow(plate, interpolation='nearest', cmap =plt.cm.gray)
+    
+    # for key, value in bounding_box.items():
+    #     plt.plot(value['x'], value['y'], linewidth=2)
+    # print(bounding_box)
+    # plt.show()
 
-def generate_two_lines_plate(font_height,char_ims):
-    h_padding = 0.2 * font_height
-    v_padding = 0.2 * font_height
-    spacing = font_height * 0.1
+    # plt.show()
+    
+    return plate, rounded_rect(out_shape, radius), code.replace(" ", ""), bounding_box
+
+def generate_two_lines_plate(font_height,char_ims, plate_color):
+
+    # for vba font
+    bounding_box = []
+    if font_height == 50:
+        h_padding = 0.05 * font_height
+        v_padding = 0.05 * font_height
+        spacing = font_height * 0.005
+
+    # for UK font
+    if font_height == 22: 
+        h_padding = 0.2 * font_height
+        v_padding = 0.2 * font_height
+        spacing = font_height * 0.1
     radius = 1 + int(font_height * 0.1 * random.random())
 
 
@@ -267,7 +305,7 @@ def generate_two_lines_plate(font_height,char_ims):
     for c in all:
         if char_ims[c].shape[1] > max:
             max = char_ims[c].shape[1]
-    #
+
     text_width = 4*max
     text_width += (len(second_code_line) - 1) * spacing
  
@@ -276,41 +314,68 @@ def generate_two_lines_plate(font_height,char_ims):
                  int(text_width + h_padding * 2))
 
     text_color, plate_color = pick_colors()
-
     text_mask = numpy.zeros(out_shape)
-
+    
+    
+    # ig, ax = plt.subplots()
+    
     x = h_padding
     y = v_padding
     count=0
-    for c in first_code_line:
-        char_im = char_ims[c]
+    for c in range(len(first_code_line)):
+        char_im = char_ims[first_code_line[c]]
         ix, iy = int(x), int(y)
 
         start=int(max/2-char_im.shape[1]/2)
         end=int(max/2+char_im.shape[1]/2)
         text_mask[iy:iy + char_im.shape[0], ix+start:ix+end] = char_im
-        #text_mask[iy:iy + char_im.shape[0], ix:(ix + max)] = char_im
         x += max + spacing
-        #count+=1
+       
+        if first_code_line[c] != " ":
+            # ax.imshow(text_mask, interpolation='nearest', cmap =plt.cm.gray)
+            # plt.scatter(ix+start, start)
+            # plt.scatter(ix+start, start + char_im.shape[0])
+            # plt.scatter(ix+start + char_im.shape[1], start)
+            # plt.scatter(ix+start + char_im.shape[1], start + char_im.shape[0])
+
+            bounding_box.append([[ix+start, start], [ix+start + char_im.shape[1], start], [ix+start + char_im.shape[1], start + char_im.shape[0]], [ix+start, start + char_im.shape[0]]])
+            
 
     x = h_padding
     y = v_padding
-    for d in second_code_line:
-        char_im = char_ims[d]
+
+    for d in range(len(second_code_line)):
+        char_im = char_ims[second_code_line[d]]
         ix, iy = int(x), int(y*2+font_height)
-        start = int(max / 2 - char_im.shape[1] / 2)
-        end = int(max / 2 + char_im.shape[1] / 2)
+        start = int(char_ims[second_code_line[d]].shape[1] / 2 - char_im.shape[1] / 2)
+        end = int(char_ims[second_code_line[d]].shape[1]  / 2 + char_im.shape[1] / 2)
         text_mask[iy:iy + char_im.shape[0], ix+start:ix+end] = char_im
         x += max + spacing
+
+        if second_code_line[d] != " ":
+            # ax.imshow(text_mask, interpolation='nearest', cmap =plt.cm.gray)
+            # plt.scatter(ix+start, iy+start)
+            # plt.scatter(ix+start, iy+start + char_im.shape[0])
+            # plt.scatter(ix+start + char_im.shape[1], iy+start)
+            # plt.scatter(ix+start + char_im.shape[1], iy+start + char_im.shape[0])
+            
+            bounding_box.append([[ix+start, iy+start],  [ix+start + char_im.shape[1], iy+start], [ix+start + char_im.shape[1], iy+start + char_im.shape[0]], [ix+start, iy+start + char_im.shape[0]]])
 
 
     plate = (numpy.ones(out_shape) * plate_color * (1. - text_mask) +
              numpy.ones(out_shape) * 0.01 * text_mask)
     
-    
 
+    # fig, ax = plt.subplots()
+    # ax.imshow(plate, interpolation='nearest', cmap =plt.cm.gray)
+    
+    # for key, value in bounding_box.items():
+    #     plt.plot(value['x'], value['y'], linewidth=2)
+    # print(bounding_box)
+    # plt.show()
+    
     code=first_code_line+second_code_line
-    return plate, rounded_rect(out_shape, radius), code.replace(" ", "")#set the name
+    return plate, rounded_rect(out_shape, radius), code.replace(" ", ""), bounding_box
 
 
 def generate_bg(num_bg_images):
@@ -332,56 +397,74 @@ def generate_bg(num_bg_images):
     return bg,img_name
 
 
-def generate_im(char_ims, num_bg_images):
+def generate_im(char_ims, num_bg_images, plate_color):
+    
     bg,img_name = generate_bg(num_bg_images)
-
     is_plate_one = False
     if random.randint(0,1) == 0:
-        
-        plate, plate_mask, code = generate_two_lines_plate(FONT_HEIGHT, char_ims)
+        plate, plate_mask, code, bounding_box = generate_two_lines_plate(FONT_HEIGHT, char_ims, plate_color)
         is_plate_one = False
     else:
-        plate, plate_mask, code = generate_plate(FONT_HEIGHT, char_ims)
+        plate, plate_mask, code, bounding_box = generate_plate(FONT_HEIGHT, char_ims)
         is_plate_one = True
-    
-    
-    plate = plate.reshape((plate.shape[0], plate.shape[1],1))
-
-    if random.randint(0,1) == 0:
-        plate = random_zoom(plate, (0.7,1.3))
+        
     # if random.randint(0,1) == 0:
-        # plate = random_brightness(plate, (0.01,0.012))
+    #     plate = random_zoom(plate, (0.7,1.3))
     # if random.randint(0,1) == 0:
-        # plate = random_shear(plate, 10)
-    
-    
-    plate = plate.reshape((plate.shape[0], plate.shape[1]))
-
-
+    # plate = random_brightness(plate, (0.01,0.012))
+    # if random.randint(0,1) == 0:
+    # plate = random_shear(plate, 10)
+    # print(bounding_box)
+    # plotted_img = draw_rect(plate, bounding_box)
+    # plt.imshow(plotted_img)
+    # plt.show()
+    # print(bounding_box)
+    # img_, bboxes_ = RandomHorizontalFlip(1)(plate.copy(), bounding_box.copy())
+    # plotted_img = bbox_util.draw_rect(img_, bboxes_)
+    # plt.imshow(plotted_img)
+    # plt.show()
 
     M, out_of_bounds = make_affine_transform(
                             from_shape=plate.shape,
                             to_shape=bg.shape,
-                            min_scale=0.7,
+                            min_scale=1.0,
                             max_scale=1.0,
-                            rotation_variation=1.0,
-                            scale_variation=0.8,
-                            translation_variation=0.8)
-
-
-
+                            rotation_variation=1.2,
+                            scale_variation=1.5,
+                            translation_variation=0.5)
     plate = cv2.warpAffine(plate, M, (bg.shape[1], bg.shape[0]))
-    label_txt = writeContour(plate, code, is_plate_one)
-    if random.randint(0,1) == 0:
-        plate = cv2.blur(plate,(3,3))
-    if random.randint(0,1) == 0:
-        plate = cv2.GaussianBlur(plate, (3,3),0)
+    plate_mask = cv2.warpAffine(plate_mask, M, (bg.shape[1], bg.shape[0]))
+    
+    M_aug = numpy.zeros((M.shape[0] + 1, M.shape[1])) 
+    M_aug[:2,:] = M
+    M_aug[-1,-1] = 1
 
+    json_txt = []
+    contours = []
+    for i in range(len(code)):
+        edge = []
+        all_points_x = []
+        all_points_y = []
+        curr_img = bounding_box[i]
+        for point in curr_img:
+            point = [point[0], point[1]]
+            after_trans = numpy.dot(M_aug, numpy.hstack((numpy.array(point),1)).reshape(-1,1))
+            y = after_trans[1]
+            x = after_trans[0]
 
+            all_points_x.append(x.tolist()[0])
+            all_points_y.append(y.tolist()[0])
+            edge.append([x,y])
+        
+        json_txt.append({'shape_attributes': {'name': 'polyline', 'all_points_x':all_points_x, 
+                                                        'all_points_y':all_points_y}, 'region_attributes':{'name': code[i], 'type': code[i]}  })
+        contours.append(numpy.array(edge))
+    
     letters_Affine=[]
     index = 0
 
-    plate_mask = cv2.warpAffine(plate_mask, M, (bg.shape[1], bg.shape[0]))
+
+    # plate_mask = cv2.warpAffine(plate_mask, M, (bg.shape[1], bg.shape[0]))
 
     out = plate * plate_mask + bg * (1.0 - plate_mask)
     out = cv2.resize(out, (OUTPUT_SHAPE[1], OUTPUT_SHAPE[0]))
@@ -389,17 +472,44 @@ def generate_im(char_ims, num_bg_images):
     out += numpy.random.normal(scale=0.05, size=out.shape)
     out = numpy.clip(out, 0., 1.)
     out = skimage.color.gray2rgb(out)
-    return plate_mask,out, code, not out_of_bounds ,label_txt
 
+    # show_contours(out,contours)
+
+    # cv2.imshow("", out)
+    # cv2.waitKey(0)
+   
+
+    return plate_mask,out, code, not out_of_bounds ,json_txt
+
+def show_contours(img, contours):
+    x_points = []
+    y_points = []
+    for contour in contours:
+        for edge in contour:
+            x_points.append(edge[0])
+            y_points.append(edge[1])
+            print("\n")
+    
+    fig, ax = plt.subplots()
+    ax.imshow(img, interpolation='nearest', cmap =plt.cm.gray)
+
+     # for n, contour in enumerate(result):
+    plt.plot(x_points, y_points, linewidth=2)
+    plt.show()
 
 def load_fonts(folder_path):
     font_char_ims = {}
+    color_distrib = [188,255,114,90,40,random.randint(190, 220)]
+    plate_color_pick = [65,170,139,182,249,random.randint(30,90)] 
+    my_list = [0] * 13 + [1] * 13 + [2] * 21 + [3] * 20 + [4] * 10 + [5] * 33
+    number = random.choice(my_list)
+
     fonts = [f for f in os.listdir(folder_path) if f.endswith('.ttf')]
     for font in fonts:
         font_char_ims[font] = dict(make_char_ims(os.path.join(folder_path,
                                                               font),
-                                                 FONT_HEIGHT))
-    return fonts, font_char_ims
+                                                  color_distrib[number]))
+    return fonts, font_char_ims, plate_color_pick[number]
 
 
 def generate_ims():
@@ -411,10 +521,10 @@ def generate_ims():
 
     """
     variation = 1.0
-    fonts, font_char_ims = load_fonts(FONT_DIR)
+    fonts, font_char_ims, plate_color = load_fonts(FONT_DIR)
     num_bg_images = os.listdir("bgs")
     while True:
-        yield generate_im(font_char_ims[random.choice(fonts)], num_bg_images)
+        yield generate_im(font_char_ims[random.choice(fonts)], num_bg_images, plate_color)
 
 def drawShape(img, coordinates, color):
 
@@ -473,9 +583,6 @@ def writeContour(letter,curClass, is_plate_one):
             result.append(contour)
     curClass = [curClass[i:i+1] for i in range(0, len(curClass), 1)]
     curClass = ['carplate'] + curClass
-    # result.sort(key=lambda x:find_bounding_box(x, img))
-    # result = sorted(result, key=lambda ctr: find_bounding_box(ctr, img)[0] + find_bounding_box(ctr, img)[1] * img.shape[1] )
-    # cntsSorted = sorted(result, key=lambda x:find_bounding_box(x, img))
     if (len(curClass) != len(result)):
         return str(0)
     boundingBoxes = [find_bounding_box(c, img) for c in result]
@@ -537,8 +644,8 @@ def writeContour(letter,curClass, is_plate_one):
             all_points_x.append(int(edge[i,1]))
             all_points_y.append(int(edge[i,0]))
         
-        json_txt.append({'shape_attributes': {'name': 'polyline', 'all_points_x':all_points_x, 
-                                                        'all_points_y':all_points_y}, 'region_attributes':{'name': curClass[n], 'type': curClass[n]}  })
+        json_txt.append({'shape_attributes': {'name': 'polyline', 'all_points_x':all_points_x.tolist(), 
+                                                        'all_points_y':all_points_y.tolist()}, 'region_attributes':{'name': curClass[n], 'type': curClass[n]}  })
         
     return json_txt
 

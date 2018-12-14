@@ -41,12 +41,12 @@ class CarPlateConfig(Config):
 
     DETECTION_MIN_CONFIDENCE = 0.9
 
-    RPN_ANCHOR_SCALES = (16, 32, 48, 64, 88)
+    RPN_ANCHOR_SCALES = (16, 32, 48, 64, 128)
 
     RPN_ANCHOR_RATIOS = [0.2, 0.5, 1]
 
-    IMAGE_MIN_DIM = int(128)
-    IMAGE_MAX_DIM = int(320)
+    IMAGE_MIN_DIM = int(320)
+    IMAGE_MAX_DIM = int(640)
 
 
 

@@ -112,13 +112,55 @@ def euler_to_mat(yaw, pitch, roll):
 
 
 def pick_colors():
-    plate_color_pick = [200,256]
-    text_color = [40,90,114,255,188,random.randint(190, 210)]
-    plate_color_pick = [90,170,139,182,249,random.randint(70,120)] 
-    my_list = [0] * 13 + [1] * 13 + [2] * 21 + [3] * 20 + [4] * 10 + [5] * 33
-    number = random.choice(my_list)
+    pick = random.randint(0,1)
+    if pick == 0:
+        plate_color_pick = random.randint(180,250)
+        text_color = random.randint(60,120)
+    else:
+        plate_color_pick = random.randint(150,250)
+        text_color = random.randint(10,30)
 
-    return text_color[number]/255, plate_color_pick[number]/255
+    return text_color/255, plate_color_pick/255
+
+def noisy(noise_typ,image):
+   if noise_typ == "gauss":
+      row,col,ch= image.shape
+      mean = 0
+      var = 0.1
+      sigma = var**0.5
+      gauss = np.random.normal(mean,sigma,(row,col,ch))
+      gauss = gauss.reshape(row,col,ch)
+      noisy = image + gauss
+      return noisy
+   elif noise_typ == "s&p":
+      row,col,ch = image.shape
+      s_vs_p = 0.5
+      amount = 0.004
+      out = np.copy(image)
+      # Salt mode
+      num_salt = np.ceil(amount * image.size * s_vs_p)
+      coords = [np.random.randint(0, i - 1, int(num_salt))
+              for i in image.shape]
+      out[coords] = 1
+
+      # Pepper mode
+      num_pepper = np.ceil(amount* image.size * (1. - s_vs_p))
+      coords = [np.random.randint(0, i - 1, int(num_pepper))
+              for i in image.shape]
+      out[coords] = 0
+      return out
+   elif noise_typ == "poisson":
+      vals = len(np.unique(image))
+      vals = 2 ** np.ceil(np.log2(vals))
+      noisy = np.random.poisson(image * vals) / float(vals)
+      return noisy
+   elif noise_typ =="speckle":
+      row,col,ch = image.shape
+      gauss = np.random.randn(row,col,ch)
+      gauss = gauss.reshape(row,col,ch)        
+      noisy = image + image * gauss
+      return noisy
+
 
 def pick_font_hight():
     return random.choice([22,50])
@@ -266,7 +308,7 @@ def generate_plate(font_height, char_ims):
             
     
     plate = (numpy.ones(out_shape) * plate_color * (1. - text_mask)  +
-             numpy.ones(out_shape)  * 0.01 * text_mask)
+             numpy.ones(out_shape)  * text_color * text_mask)
     
     # fig, ax = plt.subplots()
     # ax.imshow(plate, interpolation='nearest', cmap =plt.cm.gray)
@@ -363,7 +405,7 @@ def generate_two_lines_plate(font_height,char_ims, plate_color):
 
 
     plate = (numpy.ones(out_shape) * plate_color * (1. - text_mask) +
-             numpy.ones(out_shape) * 0.01 * text_mask)
+             numpy.ones(out_shape) * text_color * text_mask)
     
 
     # fig, ax = plt.subplots()
@@ -396,7 +438,44 @@ def generate_bg(num_bg_images):
 
     return bg,img_name
 
+def noisy(noise_typ,image):
+   if noise_typ == "gauss":
+      row,col,ch= image.shape
+      mean = 0
+      var = 0.9
+      sigma = var**0.5
+      gauss = numpy.random.normal(mean,sigma,(row,col,ch))
+      gauss = gauss.reshape(row,col,ch)
+      noisy = image + gauss
+      return noisy
+   elif noise_typ == "s&p":
+      row,col,ch = image.shape
+      s_vs_p = 0.5
+      amount = 0.004
+      out = numpy.copy(image)
+      # Salt mode
+      num_salt = numpy.ceil(amount * image.size * s_vs_p)
+      coords = [numpy.random.randint(0, i - 1, int(num_salt))
+              for i in image.shape]
+      out[coords] = 1
 
+      # Pepper mode
+      num_pepper = numpy.ceil(amount* image.size * (1. - s_vs_p))
+      coords = [numpy.random.randint(0, i - 1, int(num_pepper))
+              for i in image.shape]
+      out[coords] = 0
+      return out
+   elif noise_typ == "poisson":
+      vals = len(numpy.unique(image))
+      vals = 2 ** numpy.ceil(numpy.log2(vals))
+      noisy = numpy.random.poisson(image * vals) / float(vals)
+      return noisy
+   elif noise_typ =="speckle":
+      row,col,ch = image.shape
+      gauss = numpy.random.randn(row,col,ch)
+      gauss = gauss.reshape(row,col,ch)        
+      noisy = image + image * gauss
+      return noisy
 def generate_im(char_ims, num_bg_images, plate_color):
     
     bg,img_name = generate_bg(num_bg_images)
@@ -411,27 +490,37 @@ def generate_im(char_ims, num_bg_images, plate_color):
     # if random.randint(0,1) == 0:
     #     plate = random_zoom(plate, (0.7,1.3))
     # if random.randint(0,1) == 0:
-    # plate = random_brightness(plate, (0.01,0.012))
+    plate = plate.reshape((plate.shape[0], plate.shape[1],1))
+    # plate = random_brightness(plate, (0.041,0.005))
     # if random.randint(0,1) == 0:
     # plate = random_shear(plate, 10)
     # print(bounding_box)
     # plotted_img = draw_rect(plate, bounding_box)
     # plt.imshow(plotted_img)
+    choice = random.choice([0,1,2])
+    # if choice == 0:
+        # plate = noisy('gauss', plate)
+    # if choice == 1:
+        # plate = noisy('speckle', plate)
+    # if choice == 2:
+        # plate = noisy('poisson', plate)
+    # if random.randint(0,1) == 0:
+        # plate = noisy('s&p', plate)
     # plt.show()
     # print(bounding_box)
     # img_, bboxes_ = RandomHorizontalFlip(1)(plate.copy(), bounding_box.copy())
     # plotted_img = bbox_util.draw_rect(img_, bboxes_)
     # plt.imshow(plotted_img)
     # plt.show()
-
+    plate = plate.reshape((plate.shape[0], plate.shape[1]))
     M, out_of_bounds = make_affine_transform(
                             from_shape=plate.shape,
                             to_shape=bg.shape,
                             min_scale=1.0,
                             max_scale=1.0,
                             rotation_variation=1.2,
-                            scale_variation=1.5,
-                            translation_variation=0.5)
+                            scale_variation=1.2,
+                            translation_variation=0.8)
     plate = cv2.warpAffine(plate, M, (bg.shape[1], bg.shape[0]))
     plate_mask = cv2.warpAffine(plate_mask, M, (bg.shape[1], bg.shape[0]))
     
@@ -460,12 +549,6 @@ def generate_im(char_ims, num_bg_images, plate_color):
                                                         'all_points_y':all_points_y}, 'region_attributes':{'name': code[i], 'type': code[i]}  })
         contours.append(numpy.array(edge))
     
-    letters_Affine=[]
-    index = 0
-
-
-    # plate_mask = cv2.warpAffine(plate_mask, M, (bg.shape[1], bg.shape[0]))
-
     out = plate * plate_mask + bg * (1.0 - plate_mask)
     out = cv2.resize(out, (OUTPUT_SHAPE[1], OUTPUT_SHAPE[0]))
 
@@ -473,11 +556,14 @@ def generate_im(char_ims, num_bg_images, plate_color):
     out = numpy.clip(out, 0., 1.)
     out = skimage.color.gray2rgb(out)
 
+    # if random.randint(0,1) == 0:
+    #     noise_choice = random.choice(['gauss', 's&p','poisson','speckle'])
+    #     out = noisy(out.copy, noise_choice)
     # show_contours(out,contours)
 
     # cv2.imshow("", out)
     # cv2.waitKey(0)
-   
+
 
     return plate_mask,out, code, not out_of_bounds ,json_txt
 
@@ -525,129 +611,6 @@ def generate_ims():
     num_bg_images = os.listdir("bgs")
     while True:
         yield generate_im(font_char_ims[random.choice(fonts)], num_bg_images, plate_color)
-
-def drawShape(img, coordinates, color):
-
-    img = skimage.color.gray2rgb(img)
-
-    coordinates = coordinates.astype(int)
-    img[coordinates[:, 0], coordinates[:,1 ]] = color 
-
-    return img
-
-def get_contour_precedence(contour, cols):
-    tolerance_factor = 10
-    origin = cv2.boundingRect(contour)
-    return ((origin[1] // tolerance_factor) * tolerance_factor) * cols + origin[0]
-
-def find_bounding_box(contour, img):
-
-    box = []
-
-    Xmin = numpy.min(contour[:,0])
-    Xmax = numpy.max(contour[:,0])
-    Ymin = numpy.min(contour[:,1])
-    Ymax = numpy.max(contour[:,1])
-    box.append([Xmin, Xmax, Ymin, Ymax])
-    r = [box[0][0],box[0][1],box[0][1],box[0][0], box[0][0]]
-    c = [box[0][3],box[0][3],box[0][2],box[0][2], box[0][3]]
-    rr, cc = polygon_perimeter(r, c, img.shape)
-
-    return [min(rr), min(cc)]
-
-def get_maxpoints(contour):
-
-    Xmin = numpy.min(contour[:,0])
-    Xmax = numpy.max(contour[:,0])
-    Ymin = numpy.min(contour[:,1])
-    Ymax = numpy.max(contour[:,1])
-
-    return numpy.array((Xmin,Ymin)), numpy.array((Xmax,Ymax)) 
-
-
-def writeContour(letter,curClass, is_plate_one):
-    
-
-    img = color.rgb2gray(letter)
-    image_8bit = numpy.uint8(img * 255)
-
-    contours = measure.find_contours(img, 0.3)
-
-    ll, ur = numpy.min(contours[1],0), numpy.max(contours[1],0)
-    wh_max = ur - ll
-    result = []
-    for n, contour in enumerate(contours):
-        ll, ur = numpy.min(contour,0), numpy.max(contour,0)
-        wh = ur - ll
-        if wh_max[0] - 2  < wh[0]:
-            result.append(contour)
-    curClass = [curClass[i:i+1] for i in range(0, len(curClass), 1)]
-    curClass = ['carplate'] + curClass
-    if (len(curClass) != len(result)):
-        return str(0)
-    boundingBoxes = [find_bounding_box(c, img) for c in result]
-   
-
-    ## ----------
-    ##  key=lambda b:b[1][1], reverse=False for the ONE line sort 
-    ##  key=lambda b:b[1][0], reverse=True for the TWO line sort
-    # is_plate_one = True
-
-    # fig, ax = plt.subplots()
-    # ax.imshow(img, interpolation='nearest', cmap =plt.cm.gray)
-    if is_plate_one:
-        (result, boundingBoxes) = zip(*sorted(zip(result, boundingBoxes),
-            key=lambda b:b[1][1], reverse=False))
-        
-        curClass.pop(0)
-        result = result[1:len(result)]
-
-    else:
-        (result, boundingBoxes) = zip(*sorted(zip(result, boundingBoxes),
-            key=lambda b:b[1][0], reverse=True))
-        
-        
-        top_left, bottom_fight = get_maxpoints(result[len(result)-1])
-        top_left_first, bottom_fight_first = get_maxpoints(result[0])
-        dist_top = numpy.linalg.norm(top_left_first - top_left)
-        dist_bottom = numpy.linalg.norm(bottom_fight_first - bottom_fight)
-        if (dist_bottom > dist_top):
-            curClass = curClass[3:] + curClass[1:3] + curClass[:1]
-        else:
-            curClass = list(reversed(curClass))
-        buff = {}
-        for box in boundingBoxes:
-                if str(box[0]) in buff:
-                    buff[str(box[0])] += 1
-                else:
-                    buff[str(box[0])] = 1
-        for b in buff.values():
-            if b >= 2:
-                return str(0)
-        # for n, contour in enumerate(result):
-        #     plt.plot(contour[:, 1], contour[:, 0], linewidth=2)
-        #     plt.show()
-
-        curClass.pop()
-        result = result[:len(result) - 1]
-
-    
-    
-    json_txt = []
-    
-    
-
-    for n, edge in enumerate(result):
-        all_points_x = []
-        all_points_y = []
-        for i in range(len(edge)):
-            all_points_x.append(int(edge[i,1]))
-            all_points_y.append(int(edge[i,0]))
-        
-        json_txt.append({'shape_attributes': {'name': 'polyline', 'all_points_x':all_points_x.tolist(), 
-                                                        'all_points_y':all_points_y.tolist()}, 'region_attributes':{'name': curClass[n], 'type': curClass[n]}  })
-        
-    return json_txt
 
 
 def run(train_number, val_number, txt_file_train='via_region_data.json', txt_file_test='via_region_data.json', folder_train='train', folder_test='val'):

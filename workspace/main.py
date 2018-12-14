@@ -45,7 +45,7 @@ class CarPlateConfig(Config):
 
     RPN_ANCHOR_RATIOS = [0.2, 0.5, 1]
 
-    IMAGE_MIN_DIM = int(320)
+    IMAGE_MIN_DIM = int(480)
     IMAGE_MAX_DIM = int(640)
 
 

@@ -854,13 +854,13 @@ if __name__ == '__main__':
     if args.command == 'train':
         model = modellib.MaskRCNN(mode='training', config=config, model_dir=os.path.join(ROOT_DIR, 'logs'))
 
-        weights_path = os.path.join(ROOT_DIR, 'mask_rcnn_coco.h5')
+        weights_path = os.path.join(ROOT_DIR, 'resnet50_weights.h5')
      
         print("Logs: ", os.path.join(ROOT_DIR, 'logs'))
         print("Loading weights: ", weights_path)
         
         # weights_path = 'char_101.h5'
-        # model.load_weights(weights_path, by_name=True)
+        model.load_weights(weights_path, by_name=True)
         train_model(model, args.dataset_train)
     
     if args.command == 'detect':

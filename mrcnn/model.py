@@ -2342,7 +2342,7 @@ class MaskRCNN():
                                         histogram_freq=0, write_graph=True, write_images=False),
             keras.callbacks.ModelCheckpoint(self.checkpoint_path,
                                             verbose=0, save_weights_only=True),
-            keras.callbacks.ReduceLROnPlateau(monitor='loss', mode='auto', factor=0.1,
+            keras.callbacks.ReduceLROnPlateau(monitor='loss', mode='auto', factor=0.2,
                               patience=5, verbose=1, min_delta=0.0001, min_lr=0.00001)
         ]
 

@@ -48,7 +48,7 @@ class CarPlateConfig(Config):
     IMAGE_MIN_DIM = int(480)
     IMAGE_MAX_DIM = int(640)
 
-    LEARNING_RATE = 0.01
+    LEARNING_RATE = 0.005
 
 
 

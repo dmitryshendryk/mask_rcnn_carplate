@@ -490,14 +490,14 @@ def generate_im(char_ims, num_bg_images, plate_color):
     # if random.randint(0,1) == 0:
     #     plate = random_zoom(plate, (0.7,1.3))
     # if random.randint(0,1) == 0:
-    plate = plate.reshape((plate.shape[0], plate.shape[1],1))
+    # plate = plate.reshape((plate.shape[0], plate.shape[1],1))
     # plate = random_brightness(plate, (0.041,0.005))
     # if random.randint(0,1) == 0:
     # plate = random_shear(plate, 10)
     # print(bounding_box)
     # plotted_img = draw_rect(plate, bounding_box)
     # plt.imshow(plotted_img)
-    choice = random.choice([0,1,2])
+    # choice = random.choice([0,1,2])
     # if choice == 0:
         # plate = noisy('gauss', plate)
     # if choice == 1:
@@ -518,9 +518,9 @@ def generate_im(char_ims, num_bg_images, plate_color):
                             to_shape=bg.shape,
                             min_scale=1.0,
                             max_scale=1.0,
-                            rotation_variation=1.2,
-                            scale_variation=1.2,
-                            translation_variation=0.8)
+                            rotation_variation=1.1,
+                            scale_variation=0,
+                            translation_variation=0)
     plate = cv2.warpAffine(plate, M, (bg.shape[1], bg.shape[0]))
     plate_mask = cv2.warpAffine(plate_mask, M, (bg.shape[1], bg.shape[0]))
     

@@ -1,32 +1,3 @@
-#!/usr/bin/env python
-#
-# Copyright (c) 2016 Matthew Earl
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# 
-#     The above copyright notice and this permission notice shall be included
-#     in all copies or substantial portions of the Software.
-# 
-#     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-#     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-#     MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-#     NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-#     DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-#     OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-#     USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-
-
-"""
-Generate training and test images.
-
-"""
-
 
 __all__ = (
     'generate_ims',
@@ -52,7 +23,7 @@ from skimage import measure, data, color
 from skimage.draw import polygon_perimeter
 import json
 
-from keras.preprocessing.image import ImageDataGenerator
+
 from keras.preprocessing.image import *
 
 
@@ -63,9 +34,9 @@ ROOT_DIR = os.path.abspath("../")
 
 FONT_DIR = "./fonts"
 
-FONT_HEIGHT = 50
+FONT_HEIGHT = 22
 
-OUTPUT_SHAPE = (60,130)
+OUTPUT_SHAPE = (60,120)
 
 CHARS = common.CHARS + " "
 
@@ -73,17 +44,17 @@ CHARS = common.CHARS + " "
 def make_char_ims(font_path, choose_color):
     font_size = FONT_HEIGHT * 4
     font = ImageFont.truetype(font_path, font_size)
-
     height = max(font.getsize(c)[1] for c in CHARS)
     # color_distrib=[180,255]
     # choose_color= color_distrib[random.randint(0,1)]
     for c in CHARS:
         width = font.getsize(c)[0]#row
         im = Image.new("RGBA", (width, height), (0, 0, 0))
-
         draw = ImageDraw.Draw(im)
-        
-        draw.text((0, 0), c, (choose_color, choose_color, choose_color), font=font)
+        if './fonts/vagrounded-bold.ttf' == font_path:
+            draw.text((0, -20), c, (choose_color, choose_color, choose_color), font=font)
+        elif './fonts/UKNumberPlate.ttf' == font_path:
+            draw.text((0, 0), c, (choose_color, choose_color, choose_color), font=font)
         scale = float(FONT_HEIGHT) / height
         im = im.resize((int(width * scale), FONT_HEIGHT), Image.ANTIALIAS)
         yield c, numpy.array(im)[:, :, 0].astype(numpy.float32) / 255.
@@ -115,52 +86,12 @@ def pick_colors():
     pick = random.randint(0,1)
     if pick == 0:
         plate_color_pick = random.randint(180,250)
-        text_color = random.randint(60,120)
+        text_color = random.randint(10,30)
     else:
         plate_color_pick = random.randint(150,250)
         text_color = random.randint(10,30)
 
     return text_color/255, plate_color_pick/255
-
-def noisy(noise_typ,image):
-   if noise_typ == "gauss":
-      row,col,ch= image.shape
-      mean = 0
-      var = 0.1
-      sigma = var**0.5
-      gauss = np.random.normal(mean,sigma,(row,col,ch))
-      gauss = gauss.reshape(row,col,ch)
-      noisy = image + gauss
-      return noisy
-   elif noise_typ == "s&p":
-      row,col,ch = image.shape
-      s_vs_p = 0.5
-      amount = 0.004
-      out = np.copy(image)
-      # Salt mode
-      num_salt = np.ceil(amount * image.size * s_vs_p)
-      coords = [np.random.randint(0, i - 1, int(num_salt))
-              for i in image.shape]
-      out[coords] = 1
-
-      # Pepper mode
-      num_pepper = np.ceil(amount* image.size * (1. - s_vs_p))
-      coords = [np.random.randint(0, i - 1, int(num_pepper))
-              for i in image.shape]
-      out[coords] = 0
-      return out
-   elif noise_typ == "poisson":
-      vals = len(np.unique(image))
-      vals = 2 ** np.ceil(np.log2(vals))
-      noisy = np.random.poisson(image * vals) / float(vals)
-      return noisy
-   elif noise_typ =="speckle":
-      row,col,ch = image.shape
-      gauss = np.random.randn(row,col,ch)
-      gauss = gauss.reshape(row,col,ch)        
-      noisy = image + image * gauss
-      return noisy
-
 
 def pick_font_hight():
     return random.choice([22,50])
@@ -244,17 +175,20 @@ def rounded_rect(shape, radius):
     return out
 
 
-def generate_plate(font_height, char_ims):
-    
-    if font_height == 50:
-        h_padding = random.uniform(0.04, 0.05) * font_height
-        v_padding = random.uniform(0.04, 0.05) * font_height
-        spacing = font_height * random.uniform(-0.01, 0.01)
+def generate_plate(font_height, char_ims, font_name):
+    if font_name == 'vagrounded-bold.ttf':
 
-    h_padding = random.uniform(0.35, 0.45) * font_height
-    v_padding = random.uniform(0.1, 0.2) * font_height
-    spacing = font_height * random.uniform(-0.01, 0.01)
-    radius = 1 + int(font_height * 0.1 * random.randint(1,2))
+        h_padding = random.uniform(0.01, 0.02) * font_height
+        v_padding = random.uniform(0.001, 0.002) * font_height
+        spacing = font_height * random.uniform(-0.01, 0.01)
+        radius = 1 + int(font_height * 0.1 * random.random())
+
+    if font_name == 'UKNumberPlate.ttf':
+
+        h_padding = 0.4 * font_height
+        v_padding = 0.1 * font_height
+        spacing = font_height * random.uniform(-0.01, 0.01)
+        radius = 1 + int(font_height * 0.1 * random.random())
 
     code = generate_code()
 
@@ -267,15 +201,19 @@ def generate_plate(font_height, char_ims):
     text_width = sum(char_ims[c].shape[1] for c in code)
     text_width += (len(code) - 1) * spacing
 
-    out_shape = (int(font_height + v_padding * 2),
-                 int(text_width + h_padding * 2))
-    
+    if font_name == 'vagrounded-bold.ttf':
+        out_shape = (int(font_height + v_padding * 4),
+                    int(text_width + h_padding * 1))
+    if font_name == 'UKNumberPlate.ttf':
+        out_shape = (int(font_height + v_padding * 3),
+                    int(text_width + h_padding * 1))
+
   
     text_color, plate_color = pick_colors()
 
     
     text_mask = numpy.zeros(out_shape)
-    text_mask = text_mask * (1-text_color)
+    # text_mask = text_mask * (1-text_color)
     # ig, ax = plt.subplots()
 
     x = h_padding
@@ -322,20 +260,20 @@ def generate_plate(font_height, char_ims):
     
     return plate, rounded_rect(out_shape, radius), code.replace(" ", ""), bounding_box
 
-def generate_two_lines_plate(font_height,char_ims, plate_color):
+def generate_two_lines_plate(font_height,char_ims, font_name):
 
     # for vba font
     bounding_box = []
-    if font_height == 50:
-        h_padding = 0.05 * font_height
-        v_padding = 0.05 * font_height
-        spacing = font_height * 0.005
+    if font_name == 'vagrounded-bold.ttf':
+        h_padding = 0.0005 * font_height
+        v_padding = 0.0005 * font_height
+        spacing = font_height * 0.0000001
 
     # for UK font
-    if font_height == 22: 
+    if font_name == 'UKNumberPlate.ttf':
         h_padding = 0.2 * font_height
         v_padding = 0.2 * font_height
-        spacing = font_height * 0.1
+        spacing = font_height * 0.001
     radius = 1 + int(font_height * 0.1 * random.random())
 
 
@@ -350,9 +288,8 @@ def generate_two_lines_plate(font_height,char_ims, plate_color):
 
     text_width = 4*max
     text_width += (len(second_code_line) - 1) * spacing
- 
 
-    out_shape = (int(font_height*2 + v_padding * 3),
+    out_shape = (int(font_height*2 + v_padding * 2),
                  int(text_width + h_padding * 2))
 
     text_color, plate_color = pick_colors()
@@ -366,13 +303,13 @@ def generate_two_lines_plate(font_height,char_ims, plate_color):
     count=0
     for c in range(len(first_code_line)):
         char_im = char_ims[first_code_line[c]]
-        ix, iy = int(x), int(y)
-
+        ix, iy = int(x), int(y*0.0001)
         start=int(max/2-char_im.shape[1]/2)
         end=int(max/2+char_im.shape[1]/2)
         text_mask[iy:iy + char_im.shape[0], ix+start:ix+end] = char_im
         x += max + spacing
-       
+        # cv2.imshow("", text_mask)
+        # cv2.waitKey(0)
         if first_code_line[c] != " ":
             # ax.imshow(text_mask, interpolation='nearest', cmap =plt.cm.gray)
             # plt.scatter(ix+start, start)
@@ -382,16 +319,16 @@ def generate_two_lines_plate(font_height,char_ims, plate_color):
 
             bounding_box.append([[ix+start, start], [ix+start + char_im.shape[1], start], [ix+start + char_im.shape[1], start + char_im.shape[0]], [ix+start, start + char_im.shape[0]]])
             
-
     x = h_padding
     y = v_padding
 
     for d in range(len(second_code_line)):
         char_im = char_ims[second_code_line[d]]
-        ix, iy = int(x), int(y*2+font_height)
+        ix, iy = int(x), int(y*0.0001+font_height)
         start = int(char_ims[second_code_line[d]].shape[1] / 2 - char_im.shape[1] / 2)
         end = int(char_ims[second_code_line[d]].shape[1]  / 2 + char_im.shape[1] / 2)
         text_mask[iy:iy + char_im.shape[0], ix+start:ix+end] = char_im
+        
         x += max + spacing
 
         if second_code_line[d] != " ":
@@ -402,8 +339,12 @@ def generate_two_lines_plate(font_height,char_ims, plate_color):
             # plt.scatter(ix+start + char_im.shape[1], iy+start + char_im.shape[0])
             
             bounding_box.append([[ix+start, iy+start],  [ix+start + char_im.shape[1], iy+start], [ix+start + char_im.shape[1], iy+start + char_im.shape[0]], [ix+start, iy+start + char_im.shape[0]]])
-
-
+    
+    text_mask = text_mask.reshape((text_mask.shape[0], text_mask.shape[1],1))
+    if random.randint(0,1) == 0:
+        text_mask = cv2.GaussianBlur(text_mask,(7,7),0)
+    text_mask = text_mask.reshape((text_mask.shape[0], text_mask.shape[1]))
+   
     plate = (numpy.ones(out_shape) * plate_color * (1. - text_mask) +
              numpy.ones(out_shape) * text_color * text_mask)
     
@@ -438,87 +379,30 @@ def generate_bg(num_bg_images):
 
     return bg,img_name
 
-def noisy(noise_typ,image):
-   if noise_typ == "gauss":
-      row,col,ch= image.shape
-      mean = 0
-      var = 0.9
-      sigma = var**0.5
-      gauss = numpy.random.normal(mean,sigma,(row,col,ch))
-      gauss = gauss.reshape(row,col,ch)
-      noisy = image + gauss
-      return noisy
-   elif noise_typ == "s&p":
-      row,col,ch = image.shape
-      s_vs_p = 0.5
-      amount = 0.004
-      out = numpy.copy(image)
-      # Salt mode
-      num_salt = numpy.ceil(amount * image.size * s_vs_p)
-      coords = [numpy.random.randint(0, i - 1, int(num_salt))
-              for i in image.shape]
-      out[coords] = 1
-
-      # Pepper mode
-      num_pepper = numpy.ceil(amount* image.size * (1. - s_vs_p))
-      coords = [numpy.random.randint(0, i - 1, int(num_pepper))
-              for i in image.shape]
-      out[coords] = 0
-      return out
-   elif noise_typ == "poisson":
-      vals = len(numpy.unique(image))
-      vals = 2 ** numpy.ceil(numpy.log2(vals))
-      noisy = numpy.random.poisson(image * vals) / float(vals)
-      return noisy
-   elif noise_typ =="speckle":
-      row,col,ch = image.shape
-      gauss = numpy.random.randn(row,col,ch)
-      gauss = gauss.reshape(row,col,ch)        
-      noisy = image + image * gauss
-      return noisy
-def generate_im(char_ims, num_bg_images, plate_color):
+def generate_im(char_ims, num_bg_images, font_name):
     
     bg,img_name = generate_bg(num_bg_images)
     is_plate_one = False
     if random.randint(0,1) == 0:
-        plate, plate_mask, code, bounding_box = generate_two_lines_plate(FONT_HEIGHT, char_ims, plate_color)
+        plate, plate_mask, code, bounding_box = generate_two_lines_plate(FONT_HEIGHT, char_ims, font_name)
         is_plate_one = False
     else:
-        plate, plate_mask, code, bounding_box = generate_plate(FONT_HEIGHT, char_ims)
+        plate, plate_mask, code, bounding_box = generate_plate(FONT_HEIGHT, char_ims, font_name)
         is_plate_one = True
         
     # if random.randint(0,1) == 0:
     #     plate = random_zoom(plate, (0.7,1.3))
     # if random.randint(0,1) == 0:
-    # plate = plate.reshape((plate.shape[0], plate.shape[1],1))
+    plate = plate.reshape((plate.shape[0], plate.shape[1],1))
     # plate = random_brightness(plate, (0.041,0.005))
-    # if random.randint(0,1) == 0:
-    # plate = random_shear(plate, 10)
-    # print(bounding_box)
-    # plotted_img = draw_rect(plate, bounding_box)
-    # plt.imshow(plotted_img)
-    # choice = random.choice([0,1,2])
-    # if choice == 0:
-        # plate = noisy('gauss', plate)
-    # if choice == 1:
-        # plate = noisy('speckle', plate)
-    # if choice == 2:
-        # plate = noisy('poisson', plate)
-    # if random.randint(0,1) == 0:
-        # plate = noisy('s&p', plate)
-    # plt.show()
-    # print(bounding_box)
-    # img_, bboxes_ = RandomHorizontalFlip(1)(plate.copy(), bounding_box.copy())
-    # plotted_img = bbox_util.draw_rect(img_, bboxes_)
-    # plt.imshow(plotted_img)
-    # plt.show()
+   
     plate = plate.reshape((plate.shape[0], plate.shape[1]))
     M, out_of_bounds = make_affine_transform(
                             from_shape=plate.shape,
                             to_shape=bg.shape,
-                            min_scale=1.0,
+                            min_scale=0.75,
                             max_scale=1.0,
-                            rotation_variation=1.1,
+                            rotation_variation=0.5,
                             scale_variation=0,
                             translation_variation=0)
     plate = cv2.warpAffine(plate, M, (bg.shape[1], bg.shape[0]))
@@ -556,13 +440,7 @@ def generate_im(char_ims, num_bg_images, plate_color):
     out = numpy.clip(out, 0., 1.)
     out = skimage.color.gray2rgb(out)
 
-    # if random.randint(0,1) == 0:
-    #     noise_choice = random.choice(['gauss', 's&p','poisson','speckle'])
-    #     out = noisy(out.copy, noise_choice)
-    # show_contours(out,contours)
 
-    # cv2.imshow("", out)
-    # cv2.waitKey(0)
 
 
     return plate_mask,out, code, not out_of_bounds ,json_txt
@@ -607,10 +485,12 @@ def generate_ims():
 
     """
     variation = 1.0
-    fonts, font_char_ims, plate_color = load_fonts(FONT_DIR)
+    
     num_bg_images = os.listdir("bgs")
     while True:
-        yield generate_im(font_char_ims[random.choice(fonts)], num_bg_images, plate_color)
+        fonts, font_char_ims, plate_color = load_fonts(FONT_DIR)
+        font_name = random.choice(fonts)
+        yield generate_im(font_char_ims[font_name], num_bg_images, font_name)
 
 
 def run(train_number, val_number, txt_file_train='via_region_data.json', txt_file_test='via_region_data.json', folder_train='train', folder_test='val'):

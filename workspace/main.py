@@ -19,6 +19,7 @@ from mrcnn import model as modellib, utils
 from mrcnn import visualize
 from mrcnn.visualize import display_images
 from mrcnn.model import log
+from workspace import evaluate
 
 # Path to trained weights file
 COCO_WEIGHTS_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
@@ -33,22 +34,22 @@ class CarPlateConfig(Config):
 
     NAME = 'carplate'
 
-    IMAGES_PER_GPU = 2
+    IMAGES_PER_GPU = 1
 
-    NUM_CLASSES = 1 + 33
+    NUM_CLASSES = 1 + 1
 
     STEPS_PER_EPOCH = 100
 
     DETECTION_MIN_CONFIDENCE = 0.9
 
-    RPN_ANCHOR_SCALES = (16, 32, 48, 64, 128)
+    # RPN_ANCHOR_SCALES = (16, 32, 48, 64, 128)
 
-    RPN_ANCHOR_RATIOS = [0.2, 0.5, 1]
+    # RPN_ANCHOR_RATIOS = [0.2, 0.5, 1]
 
-    IMAGE_MIN_DIM = int(480)
-    IMAGE_MAX_DIM = int(640)
+    # IMAGE_MIN_DIM = int(480)
+    # IMAGE_MAX_DIM = int(640)
 
-    LEARNING_RATE = 0.005
+    LEARNING_RATE = 0.001
 
 
 
@@ -66,77 +67,77 @@ class CarPlateDataset(utils.Dataset):
 
    def load_carplates(self, dataset_dir, subset):
 
-        self.add_class("carplate", 1, "0")
-        self.add_class("carplate", 2, "1")
-        self.add_class("carplate", 3, "2")
-        self.add_class("carplate", 4, "3")
-        self.add_class("carplate", 5, "4")
-        self.add_class("carplate", 6, "5")
-        self.add_class("carplate", 7, "6")
-        self.add_class("carplate", 8, "7")
-        self.add_class("carplate", 9, "8")
-        self.add_class("carplate", 10, "9")
-        self.add_class("carplate", 11, "A")
-        self.add_class("carplate", 12, "B")
-        self.add_class("carplate", 13, "C")
-        self.add_class("carplate", 14, "D")
-        self.add_class("carplate", 15, "E")
-        self.add_class("carplate", 16, "F")
-        self.add_class("carplate", 17, "G")
-        self.add_class("carplate", 18, "H")
-        self.add_class("carplate", 19, "J")
-        self.add_class("carplate", 20, "K")
-        self.add_class("carplate", 21, "L")
-        self.add_class("carplate", 22, "M")
-        self.add_class("carplate", 23, "N")
-        self.add_class("carplate", 24, "P")
-        self.add_class("carplate", 25, "R")
-        self.add_class("carplate", 26, "S")
-        self.add_class("carplate", 27, "T")
-        self.add_class("carplate", 28, "U")
-        self.add_class("carplate", 29, "V")
-        self.add_class("carplate", 30, "W")
-        self.add_class("carplate", 31, "X")
-        self.add_class("carplate", 32, "Y")
-        self.add_class("carplate", 33, "Z")
-
-        name_dict = {"0": 1,
-                         "1": 2,
-                         "2": 3,
-                         "3": 4,
-                         "4": 5,
-                         "5": 6,
-                         "6": 7,
-                         "7": 8,
-                         "8": 9,
-                         "9": 10,
-                         "A": 11,
-                         "B": 12,
-                         "C": 13,
-                         "D": 14,
-                         "E": 15,
-                         "F": 16,
-                         "G": 17,
-                         "H": 18,
-                         "J": 19,
-                         "K": 20,
-                         "L": 21,
-                         "M": 22,
-                         "N": 23,
-                         "P": 24,
-                         "R": 25,
-                         "S": 26,
-                         "T": 27,
-                         "U": 28,
-                         "V": 29,
-                         "W": 30,
-                         "X": 31,
-                         "Y": 32,
-                         "Z": 33
-                         }
-        # name_dict = {
-        #     "carplate": 1
-        # }
+        # self.add_class("carplate", 1, "0")
+        # self.add_class("carplate", 2, "1")
+        # self.add_class("carplate", 3, "2")
+        # self.add_class("carplate", 4, "3")
+        # self.add_class("carplate", 5, "4")
+        # self.add_class("carplate", 6, "5")
+        # self.add_class("carplate", 7, "6")
+        # self.add_class("carplate", 8, "7")
+        # self.add_class("carplate", 9, "8")
+        # self.add_class("carplate", 10, "9")
+        # self.add_class("carplate", 11, "A")
+        # self.add_class("carplate", 12, "B")
+        # self.add_class("carplate", 13, "C")
+        # self.add_class("carplate", 14, "D")
+        # self.add_class("carplate", 15, "E")
+        # self.add_class("carplate", 16, "F")
+        # self.add_class("carplate", 17, "G")
+        # self.add_class("carplate", 18, "H")
+        # self.add_class("carplate", 19, "J")
+        # self.add_class("carplate", 20, "K")
+        # self.add_class("carplate", 21, "L")
+        # self.add_class("carplate", 22, "M")
+        # self.add_class("carplate", 23, "N")
+        # self.add_class("carplate", 24, "P")
+        # self.add_class("carplate", 25, "R")
+        # self.add_class("carplate", 26, "S")
+        # self.add_class("carplate", 27, "T")
+        # self.add_class("carplate", 28, "U")
+        # self.add_class("carplate", 29, "V")
+        # self.add_class("carplate", 30, "W")
+        # self.add_class("carplate", 31, "X")
+        # self.add_class("carplate", 32, "Y")
+        # self.add_class("carplate", 33, "Z")
+        self.add_class("carplate", 1, "carplate")
+        # name_dict = {"0": 1,
+        #                  "1": 2,
+        #                  "2": 3,
+        #                  "3": 4,
+        #                  "4": 5,
+        #                  "5": 6,
+        #                  "6": 7,
+        #                  "7": 8,
+        #                  "8": 9,
+        #                  "9": 10,
+        #                  "A": 11,
+        #                  "B": 12,
+        #                  "C": 13,
+        #                  "D": 14,
+        #                  "E": 15,
+        #                  "F": 16,
+        #                  "G": 17,
+        #                  "H": 18,
+        #                  "J": 19,
+        #                  "K": 20,
+        #                  "L": 21,
+        #                  "M": 22,
+        #                  "N": 23,
+        #                  "P": 24,
+        #                  "R": 25,
+        #                  "S": 26,
+        #                  "T": 27,
+        #                  "U": 28,
+        #                  "V": 29,
+        #                  "W": 30,
+        #                  "X": 31,
+        #                  "Y": 32,
+        #                  "Z": 33
+        #                  }
+        name_dict = {
+            "carplate": 1
+        }
         assert subset in ['train', 'val']
 
         dataset_dir = os.path.join(dataset_dir, subset)
@@ -236,7 +237,7 @@ def display_dataset(subfolder):
 
 def bounding_boxes(subfolder):
     dataset_train = CarPlateDataset()
-    dataset_train.load_carplates(os.path.join(ROOT_DIR, subfolder), "val")
+    dataset_train.load_carplates(os.path.join(ROOT_DIR, subfolder), "train")
     dataset_train.prepare()
 
 
@@ -762,6 +763,14 @@ if __name__ == '__main__':
         display_anchor(config, args.dataset)
     if args.command == 'inspect_model':
         inspect_model(config, args.weights)
+    if args.command == 'eval':
+        model = modellib.MaskRCNN(mode='inference', config=config, model_dir=os.path.join(ROOT_DIR, 'logs'))
+        
+        model_path = os.path.join(ROOT_DIR, args.weights)
+        print("Loading weights ", model_path)
+        model.load_weights(model_path, by_name=True)
+
+        evaluate.evaluate_carplate(args.dataset, model, ROOT_DIR)
 
 
     

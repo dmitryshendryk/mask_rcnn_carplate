@@ -402,9 +402,9 @@ def generate_im(char_ims, num_bg_images, font_name):
                             to_shape=bg.shape,
                             min_scale=0.75,
                             max_scale=1.0,
-                            rotation_variation=0.5,
+                            rotation_variation=0.9,
                             scale_variation=0,
-                            translation_variation=0)
+                            translation_variation=0.8)
     plate = cv2.warpAffine(plate, M, (bg.shape[1], bg.shape[0]))
     plate_mask = cv2.warpAffine(plate_mask, M, (bg.shape[1], bg.shape[0]))
     

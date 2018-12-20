@@ -20,6 +20,7 @@ from mrcnn import visualize
 from mrcnn.visualize import display_images
 from mrcnn.model import log
 from workspace import evaluate
+from workspace import helper
 
 # Path to trained weights file
 COCO_WEIGHTS_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
@@ -36,18 +37,18 @@ class CarPlateConfig(Config):
 
     IMAGES_PER_GPU = 1
 
-    NUM_CLASSES = 1 + 1
+    NUM_CLASSES = 1 + 33
 
     STEPS_PER_EPOCH = 100
 
     DETECTION_MIN_CONFIDENCE = 0.9
 
-    # RPN_ANCHOR_SCALES = (16, 32, 48, 64, 128)
+    RPN_ANCHOR_SCALES = (16, 32, 48, 64, 128)
 
-    # RPN_ANCHOR_RATIOS = [0.2, 0.5, 1]
-
-    # IMAGE_MIN_DIM = int(480)
-    # IMAGE_MAX_DIM = int(640)
+    RPN_ANCHOR_RATIOS = [0.2, 0.5, 1]
+    RPN_TRAIN_ANCHORS_PER_IMAGE = 320
+    IMAGE_MIN_DIM = int(480)
+    IMAGE_MAX_DIM = int(640)
 
     LEARNING_RATE = 0.001
 
@@ -675,7 +676,6 @@ def inspect_model(config, model_path):
 
     plt.show()
 
-    
 def detection(model, image_path=None, video_path=None):
     assert image_path or video_path
     # class_names = ['BG','carplate']
@@ -692,10 +692,13 @@ def detection(model, image_path=None, video_path=None):
             # Detect objects
             # image = skimage.color.gray2rgb(image)
             r = model.detect([image], verbose=1)[0]
-            print(r)
-
+           
+            result = helper.get_char_result(image, r['rois'], r['masks'], r['class_ids'],
+                                      class_names, r['scores'], show_bbox=True, score_threshold=0.50,
+                                      show_mask=False)
+            print(result)
             visualize.display_instances(image, r['rois'], r['masks'], r['class_ids'], 
-                                class_names, r['scores'], figsize=(3,3))
+                                class_names, r['scores'], figsize=(3,3), show_mask=False)
             cv2.waitKey(0)
             
 
@@ -748,10 +751,10 @@ if __name__ == '__main__':
 
     if args.command == 'train':
         config = CarPlateConfig()
-    else:
+    elif args.command == 'detect':
         config = InferenceConfig()
     
-    config.display()
+    #config.display()
 
     if args.command == 'display_data':
         display_dataset(args.dataset)
@@ -763,7 +766,7 @@ if __name__ == '__main__':
         display_anchor(config, args.dataset)
     if args.command == 'inspect_model':
         inspect_model(config, args.weights)
-    if args.command == 'eval':
+    if args.command == 'eval_carplate':
         model = modellib.MaskRCNN(mode='inference', config=config, model_dir=os.path.join(ROOT_DIR, 'logs'))
         
         model_path = os.path.join(ROOT_DIR, args.weights)
@@ -772,6 +775,28 @@ if __name__ == '__main__':
 
         evaluate.evaluate_carplate(args.dataset, model, ROOT_DIR)
 
+    if args.command == 'eval_chars':
+
+        lp_path = args.weights.split(',')[0]
+        chars_path = args.weights.split(',')[1]
+
+        lp_config = evaluate.EvalCarPlateConfig()
+        lp_config.display()
+        chars_config = evaluate.EvalCharConfig()
+        chars_config.display
+
+        lp_model = modellib.MaskRCNN(mode='inference', config=lp_config, model_dir=os.path.join(ROOT_DIR, 'logs'))
+        model_path = os.path.join(ROOT_DIR, lp_path)
+        print("Loading weights ", model_path)
+        lp_model.load_weights(model_path, by_name=True)
+
+
+        chars_model = modellib.MaskRCNN(mode='inference', config=chars_config, model_dir=os.path.join(ROOT_DIR, 'logs'))
+        model_path = os.path.join(ROOT_DIR, chars_path)
+        print("Loading weights ", model_path)
+        chars_model.load_weights(model_path, by_name=True)
+
+        evaluate.evaluate_numbers(args.dataset, lp_model, chars_model, ROOT_DIR)
 
     
     

@@ -41,22 +41,28 @@ OUTPUT_SHAPE = (60,120)
 CHARS = common.CHARS + " "
 
 
-def make_char_ims(font_path, choose_color):
+def make_char_ims(font_path):
     font_size = FONT_HEIGHT * 4
     font = ImageFont.truetype(font_path, font_size)
     height = max(font.getsize(c)[1] for c in CHARS)
-    # color_distrib=[180,255]
     # choose_color= color_distrib[random.randint(0,1)]
+    text_color = random.randint(220,250)
+    if random.randint(0,6) == 0:
+        text_color = random.randint(160,190)
+
     for c in CHARS:
         width = font.getsize(c)[0]#row
         im = Image.new("RGBA", (width, height), (0, 0, 0))
         draw = ImageDraw.Draw(im)
         if './fonts/vagrounded-bold.ttf' == font_path:
-            draw.text((0, -20), c, (choose_color, choose_color, choose_color), font=font)
+            draw.text((0, 0), c, (text_color, text_color, text_color), font=font)
         elif './fonts/UKNumberPlate.ttf' == font_path:
-            draw.text((0, 0), c, (choose_color, choose_color, choose_color), font=font)
+            draw.text((0, 0), c, (text_color, text_color, text_color), font=font)
         scale = float(FONT_HEIGHT) / height
         im = im.resize((int(width * scale), FONT_HEIGHT), Image.ANTIALIAS)
+        # if './fonts/vagrounded-bold.ttf' == font_path:
+            
+            # im = im.resize((int(width * scale), FONT_HEIGHT), Image.ANTIALIAS)
         yield c, numpy.array(im)[:, :, 0].astype(numpy.float32) / 255.
 
 
@@ -83,13 +89,12 @@ def euler_to_mat(yaw, pitch, roll):
 
 
 def pick_colors():
-    pick = random.randint(0,1)
-    if pick == 0:
-        plate_color_pick = random.randint(180,250)
-        text_color = random.randint(10,30)
-    else:
-        plate_color_pick = random.randint(150,250)
-        text_color = random.randint(10,30)
+    plate_color_pick = random.randint(110,180)
+    text_color = random.randint(0,20)
+    if random.randint(0,5) == 0:
+        plate_color_pick = random.randint(160,190)
+        text_color = random.randint(20,40)
+        
 
     return text_color/255, plate_color_pick/255
 
@@ -208,11 +213,13 @@ def generate_plate(font_height, char_ims, font_name):
         out_shape = (int(font_height + v_padding * 3),
                     int(text_width + h_padding * 1))
 
-  
+   
+
     text_color, plate_color = pick_colors()
 
     
     text_mask = numpy.zeros(out_shape)
+    
     # text_mask = text_mask * (1-text_color)
     # ig, ax = plt.subplots()
 
@@ -243,11 +250,23 @@ def generate_plate(font_height, char_ims, font_name):
             # plt.scatter(ix+start + char_im.shape[1], iy+start + char_im.shape[0])
 
             bounding_box.append([[ix+start, iy+start], [ix+start + char_im.shape[1], iy+start], [ix+start + char_im.shape[1], iy+start + char_im.shape[0]] , [ix+start, iy+start + char_im.shape[0]]])
-            
     
+
+    text_mask = text_mask.reshape((text_mask.shape[0], text_mask.shape[1],1))
+
+    if random.randint(0,5) == 0:
+        text_mask = cv2.GaussianBlur(text_mask,(7,7),0)
+
+    text_mask = text_mask.reshape((text_mask.shape[0], text_mask.shape[1]))
+
     plate = (numpy.ones(out_shape) * plate_color * (1. - text_mask)  +
              numpy.ones(out_shape)  * text_color * text_mask)
-    
+        
+    if random.randint(0,7) == 0:
+        ratio = random.choice([0.3,0.4,0.5])
+        for x in range(plate.shape[0]):
+            for y in range(plate.shape[1]):
+                plate[x][y] = plate[x][y] / ratio
     # fig, ax = plt.subplots()
     # ax.imshow(plate, interpolation='nearest', cmap =plt.cm.gray)
     
@@ -265,14 +284,16 @@ def generate_two_lines_plate(font_height,char_ims, font_name):
     # for vba font
     bounding_box = []
     if font_name == 'vagrounded-bold.ttf':
-        h_padding = 0.0005 * font_height
+        h_padding = 0.005 * font_height
         v_padding = 0.0005 * font_height
-        spacing = font_height * 0.0000001
+        spacing = font_height * 0.000001
+    
+    
 
     # for UK font
     if font_name == 'UKNumberPlate.ttf':
         h_padding = 0.2 * font_height
-        v_padding = 0.2 * font_height
+        v_padding = 0.02 * font_height
         spacing = font_height * 0.001
     radius = 1 + int(font_height * 0.1 * random.random())
 
@@ -285,16 +306,16 @@ def generate_two_lines_plate(font_height,char_ims, font_name):
     for c in all:
         if char_ims[c].shape[1] > max:
             max = char_ims[c].shape[1]
-
+      
     text_width = 4*max
     text_width += (len(second_code_line) - 1) * spacing
 
-    out_shape = (int(font_height*2 + v_padding * 2),
+
+    out_shape = (int(font_height*2 + v_padding * 1),
                  int(text_width + h_padding * 2))
 
     text_color, plate_color = pick_colors()
     text_mask = numpy.zeros(out_shape)
-    
     
     # ig, ax = plt.subplots()
     
@@ -340,14 +361,26 @@ def generate_two_lines_plate(font_height,char_ims, font_name):
             
             bounding_box.append([[ix+start, iy+start],  [ix+start + char_im.shape[1], iy+start], [ix+start + char_im.shape[1], iy+start + char_im.shape[0]], [ix+start, iy+start + char_im.shape[0]]])
     
-    text_mask = text_mask.reshape((text_mask.shape[0], text_mask.shape[1],1))
-    if random.randint(0,1) == 0:
-        text_mask = cv2.GaussianBlur(text_mask,(7,7),0)
-    text_mask = text_mask.reshape((text_mask.shape[0], text_mask.shape[1]))
-   
-    plate = (numpy.ones(out_shape) * plate_color * (1. - text_mask) +
-             numpy.ones(out_shape) * text_color * text_mask)
     
+    text_mask = text_mask.reshape((text_mask.shape[0], text_mask.shape[1],1))
+    
+    # cv2.imshow("", text_mask)
+    # cv2.waitKey(0)
+
+    if random.randint(0,5) == 0:
+        text_mask = cv2.GaussianBlur(text_mask,(7,7),0)
+
+    text_mask = text_mask.reshape((text_mask.shape[0], text_mask.shape[1]))
+
+    plate = (numpy.ones(out_shape) * plate_color * (1. - text_mask) +
+             numpy.ones(out_shape) * text_color * (1. - text_mask))
+    
+    
+    if random.randint(0,7) == 0:
+        ratio = random.choice([0.3,0.4,0.5])
+        for x in range(plate.shape[0]):
+            for y in range(plate.shape[1]):
+                plate[x][y] = plate[x][y] / ratio
 
     # fig, ax = plt.subplots()
     # ax.imshow(plate, interpolation='nearest', cmap =plt.cm.gray)
@@ -382,29 +415,29 @@ def generate_bg(num_bg_images):
 def generate_im(char_ims, num_bg_images, font_name):
     
     bg,img_name = generate_bg(num_bg_images)
-    is_plate_one = False
+    # is_plate_one = False
     if random.randint(0,1) == 0:
         plate, plate_mask, code, bounding_box = generate_two_lines_plate(FONT_HEIGHT, char_ims, font_name)
         is_plate_one = False
     else:
         plate, plate_mask, code, bounding_box = generate_plate(FONT_HEIGHT, char_ims, font_name)
         is_plate_one = True
-        
+            
     # if random.randint(0,1) == 0:
     #     plate = random_zoom(plate, (0.7,1.3))
     # if random.randint(0,1) == 0:
-    plate = plate.reshape((plate.shape[0], plate.shape[1],1))
+    # plate = plate.reshape((plate.shape[0], plate.shape[1],1))
     # plate = random_brightness(plate, (0.041,0.005))
    
     plate = plate.reshape((plate.shape[0], plate.shape[1]))
     M, out_of_bounds = make_affine_transform(
                             from_shape=plate.shape,
                             to_shape=bg.shape,
-                            min_scale=0.75,
+                            min_scale=0.95,
                             max_scale=1.0,
-                            rotation_variation=0.9,
-                            scale_variation=0,
-                            translation_variation=0.8)
+                            rotation_variation=1.1,
+                            scale_variation=1.0,
+                            translation_variation=1.0)
     plate = cv2.warpAffine(plate, M, (bg.shape[1], bg.shape[0]))
     plate_mask = cv2.warpAffine(plate_mask, M, (bg.shape[1], bg.shape[0]))
     
@@ -441,8 +474,6 @@ def generate_im(char_ims, num_bg_images, font_name):
     out = skimage.color.gray2rgb(out)
 
 
-
-
     return plate_mask,out, code, not out_of_bounds ,json_txt
 
 def show_contours(img, contours):
@@ -463,17 +494,17 @@ def show_contours(img, contours):
 
 def load_fonts(folder_path):
     font_char_ims = {}
-    color_distrib = [188,255,114,90,40,random.randint(190, 220)]
-    plate_color_pick = [65,170,139,182,249,random.randint(30,90)] 
-    my_list = [0] * 13 + [1] * 13 + [2] * 21 + [3] * 20 + [4] * 10 + [5] * 33
-    number = random.choice(my_list)
+    # color_distrib = [188,255,114,90,40,random.randint(190, 220)]
+    # plate_color_pick = [65,170,139,182,249,random.randint(30,90)] 
+    # my_list = [0] * 13 + [1] * 13 + [2] * 21 + [3] * 20 + [4] * 10 + [5] * 33
+    # number = random.choice(my_list)
 
     fonts = [f for f in os.listdir(folder_path) if f.endswith('.ttf')]
     for font in fonts:
         font_char_ims[font] = dict(make_char_ims(os.path.join(folder_path,
-                                                              font),
-                                                  color_distrib[number]))
-    return fonts, font_char_ims, plate_color_pick[number]
+                                                              font)
+                                                              ))
+    return fonts, font_char_ims
 
 
 def generate_ims():
@@ -488,7 +519,7 @@ def generate_ims():
     
     num_bg_images = os.listdir("bgs")
     while True:
-        fonts, font_char_ims, plate_color = load_fonts(FONT_DIR)
+        fonts, font_char_ims = load_fonts(FONT_DIR)
         font_name = random.choice(fonts)
         yield generate_im(font_char_ims[font_name], num_bg_images, font_name)
 

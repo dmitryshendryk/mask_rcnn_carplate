@@ -3,6 +3,7 @@ import skimage.draw
 import datetime
 import sys
 import cv2
+import numps as np 
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("../")
@@ -17,6 +18,7 @@ from workspace import helper
 class EvalCharConfig(Config):
 
 
+
     NAME = 'chars'
 
     IMAGES_PER_GPU = 1
@@ -25,18 +27,26 @@ class EvalCharConfig(Config):
 
     STEPS_PER_EPOCH = 100
 
-    DETECTION_MIN_CONFIDENCE = 0.9
+    DETECTION_MIN_CONFIDENCE = 0.5
 
-    RPN_ANCHOR_SCALES = (8, 16, 32, 64, 128)
+    RPN_ANCHOR_SCALES = (32, 56, 72, 96, 128)
 
-    RPN_ANCHOR_RATIOS = [0.2, 0.5, 1]
-    RPN_TRAIN_ANCHORS_PER_IMAGE = 320
+    RPN_ANCHOR_RATIOS = [0.3, 0.6, 1]
+
+    RPN_TRAIN_ANCHORS_PER_IMAGE = 500
+
+    RPN_NMS_THRESHOLD = 0.6
+    
     IMAGE_MIN_DIM = int(480)
     IMAGE_MAX_DIM = int(640)
+    
+    POST_NMS_ROIS_INFERENCE = 2000
 
-    DETECTION_NMS_THRESHOLD =0.3
-    RPN_NMS_THRESHOLD = 0.8
+    TRAIN_ROIS_PER_IMAGE = 400
 
+    MEAN_PIXEL = np.array([0.449122045 * 255, 0.449122045 * 255, 0.449122045 * 255 ])
+
+    LEARNING_RATE = 0.005
 
 class EvalCarPlateConfig(Config):
 
@@ -131,7 +141,7 @@ def evaluate_numbers(img_folder, lp_model, chars_model, root_dir):
     padding_carplate = [10,10]
     class_names_chars = ['BG','0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
                             'J', 'K', 'L', 'M', 'N', 'P',  'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
-    class_names_plate = ['BG', 'carpate']
+    class_names_plate = ['BG', 'carplate']
     correct = 0
     error = 0
     if img_folder:
@@ -147,11 +157,7 @@ def evaluate_numbers(img_folder, lp_model, chars_model, root_dir):
                 carplate_roi = r['rois'][0]
                 plate_image = image[carplate_roi[0]- padding_carplate[0]:carplate_roi[2] + padding_carplate[0],carplate_roi[1]-padding_carplate[1]:carplate_roi[3]+padding_carplate[1]]
                 
-                print(plate_image)
-                print(len(plate_image))
-                print(img)
                 if len(plate_image) == 0:
-                    print("HEEERREEEE")
                     continue
                 c = chars_model.detect([plate_image], verbose=1)[0]
 

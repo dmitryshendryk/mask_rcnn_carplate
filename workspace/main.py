@@ -41,15 +41,24 @@ class CarPlateConfig(Config):
 
     STEPS_PER_EPOCH = 100
 
-    DETECTION_MIN_CONFIDENCE = 0.9
+    DETECTION_MIN_CONFIDENCE = 0.5
 
-    RPN_ANCHOR_SCALES = (16, 32, 48, 64, 128)
+    RPN_ANCHOR_SCALES = (32, 56, 72, 96, 128)
 
-    RPN_ANCHOR_RATIOS = [0.2, 0.5, 1]
-    RPN_TRAIN_ANCHORS_PER_IMAGE = 320
+    RPN_ANCHOR_RATIOS = [0.3, 0.6, 1]
+
+    RPN_TRAIN_ANCHORS_PER_IMAGE = 500
+
+    RPN_NMS_THRESHOLD = 0.6
+    
     IMAGE_MIN_DIM = int(480)
     IMAGE_MAX_DIM = int(640)
+    
     POST_NMS_ROIS_INFERENCE = 2000
+
+    TRAIN_ROIS_PER_IMAGE = 400
+
+    MEAN_PIXEL = np.array([0.449122045 * 255, 0.449122045 * 255, 0.449122045 * 255 ])
 
     LEARNING_RATE = 0.005
 
@@ -822,13 +831,7 @@ if __name__ == '__main__':
         print("Loading weights: ", weights_path)
         
         # weights_path = 'char_101.h5'
-        if args.mode_train == 'all':
-            model.load_weights(weights_path, by_name=True)
-        elif args.mode_train == 'heads':
-            model.load_weights(weights_path, by_name=True, exclude=[
-                "mrcnn_class_logits", "mrcnn_bbox_fc",
-                "mrcnn_bbox", "mrcnn_mask"])
-
+        model.load_weights(weights_path, by_name=True)
 
         train_model(model, args.dataset_train, args.mode_train)
     

@@ -49,8 +49,9 @@ class CarPlateConfig(Config):
     RPN_TRAIN_ANCHORS_PER_IMAGE = 320
     IMAGE_MIN_DIM = int(480)
     IMAGE_MAX_DIM = int(640)
+    POST_NMS_ROIS_INFERENCE = 2000
 
-    LEARNING_RATE = 0.001
+    LEARNING_RATE = 0.005
 
 
 
@@ -702,7 +703,7 @@ def detection(model, image_path=None, video_path=None):
             cv2.waitKey(0)
             
 
-def train_model(model, subfolder):
+def train_model(model, subfolder, mode_train):
     """Train the model."""
     # Training dataset.
     
@@ -715,12 +716,19 @@ def train_model(model, subfolder):
     dataset_val.load_carplates(os.path.join(ROOT_DIR, subfolder), "val")
     dataset_val.prepare()
 
+    if mode_train == 'all':
+        print("Training network all")
+        model.train(dataset_train, dataset_val,
+                    learning_rate=config.LEARNING_RATE,
+                    epochs=1000,
+                    layers='all')
+    elif mode_train == 'heads':
+        print("Training network heads")
+        model.train(dataset_train, dataset_val,
+                    learning_rate=config.LEARNING_RATE,
+                    epochs=1000,
+                    layers='heads')
 
-    print("Training network all")
-    model.train(dataset_train, dataset_val,
-                learning_rate=config.LEARNING_RATE,
-                epochs=1000,
-                layers='all')
 
 
 
@@ -742,6 +750,9 @@ if __name__ == '__main__':
                         metavar="/path/to/balloon/dataset/",
                         help='Directory training dataset')
     parser.add_argument('--weights', required=False,
+                        metavar="/path/to/weights.h5",
+                        help="Path to weights .h5 file or 'coco'")
+    parser.add_argument('--mode_train', required=False,
                         metavar="/path/to/weights.h5",
                         help="Path to weights .h5 file or 'coco'")
 
@@ -802,15 +813,24 @@ if __name__ == '__main__':
     
     if args.command == 'train':
         model = modellib.MaskRCNN(mode='training', config=config, model_dir=os.path.join(ROOT_DIR, 'logs'))
-
-        weights_path = os.path.join(ROOT_DIR, 'resnet50_weights.h5')
+        if args.mode_train == 'all':
+            weights_path = os.path.join(ROOT_DIR, 'resnet50_weights.h5')
+        elif args.mode_train == 'heads':
+            weights_path = args.weights
      
         print("Logs: ", os.path.join(ROOT_DIR, 'logs'))
         print("Loading weights: ", weights_path)
         
         # weights_path = 'char_101.h5'
-        model.load_weights(weights_path, by_name=True)
-        train_model(model, args.dataset_train)
+        if args.mode_train == 'all':
+            model.load_weights(weights_path, by_name=True)
+        elif args.mode_train == 'heads':
+            model.load_weights(weights_path, by_name=True, exclude=[
+                "mrcnn_class_logits", "mrcnn_bbox_fc",
+                "mrcnn_bbox", "mrcnn_mask"])
+
+
+        train_model(model, args.dataset_train, args.mode_train)
     
     if args.command == 'detect':
         model = modellib.MaskRCNN(mode='inference', config=config, model_dir=os.path.join(ROOT_DIR, 'logs'))

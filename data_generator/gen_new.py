@@ -952,8 +952,8 @@ labelPath2 = ROOT_DIR+ '/car_plate_data/' + 'val' + "/" + 'via_region_data.json'
 f_labeltxt2 = open(labelPath2, 'w')
 
 
-im_gen = itertools.islice(generate_ims(), 10)
-im_gen_test = itertools.islice(generate_ims(), 5)
+im_gen = itertools.islice(generate_ims(), 30000)
+im_gen_test = itertools.islice(generate_ims(), 3000)
 json_txt_train = {}
 json_txt_test = {}
 

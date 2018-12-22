@@ -38,6 +38,17 @@ DIGITS = "0123456789"
 LETTERS = "ABCDEFGHJKLMNPRSTUVWXYZ"
 CHARS = LETTERS + DIGITS
 
+G_DIGITS="023456789"
+G_LETTERS="ABCDEFGHKMNPRTUVWYZ"
+
+R_DIGITS="1"
+R_LETTERS="LJSX"
+CHARS = LETTERS + DIGITS
+
+H_CHARS=G_LETTERS+G_DIGITS
+
+R_CHARS=R_DIGITS+R_LETTERS
+
 def softmax(a):
     exps = numpy.exp(a.astype(numpy.float64))
     return exps / numpy.sum(exps, axis=-1)[:, numpy.newaxis]

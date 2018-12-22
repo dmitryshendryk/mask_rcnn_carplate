@@ -248,7 +248,7 @@ def display_dataset(subfolder):
 
 def bounding_boxes(subfolder):
     dataset_train = CarPlateDataset()
-    dataset_train.load_carplates(os.path.join(ROOT_DIR, subfolder), "train")
+    dataset_train.load_carplates(os.path.join(ROOT_DIR, subfolder), "val")
     dataset_train.prepare()
 
 

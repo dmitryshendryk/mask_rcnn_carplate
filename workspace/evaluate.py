@@ -3,7 +3,7 @@ import skimage.draw
 import datetime
 import sys
 import cv2
-import numps as np 
+import numpy as np 
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("../")

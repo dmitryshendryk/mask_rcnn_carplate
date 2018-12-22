@@ -579,3 +579,4 @@ def run(train_number, val_number, txt_file_train='via_region_data.json', txt_fil
 
     f_labeltxt.close()
     f_labeltxt2.close()
+    

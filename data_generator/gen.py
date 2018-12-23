@@ -40,6 +40,7 @@ import sys
 
 import cv2
 import numpy
+import json
 
 from PIL import Image
 from PIL import ImageDraw
@@ -924,29 +925,417 @@ def show_contours(img,contours):# show all contours
     #cv2.imshow(" ",img)
     #cv2.waitKey(0)
 
+# if not os.path.exists('Bigscale_train'):
+    # os.mkdir("Bigscale_train")
 #if not os.path.exists('mask_Bigscale_train'):
     #os.mkdir("mask_Bigscale_train")
+# if not os.path.exists('Bigscale_val'):
+    # os.mkdir("Bigscale_val")
 #if not os.path.exists('mask_Bigscale_val'):
     #os.mkdir("mask_Bigscale_val")
-
 ROOT_DIR = os.path.abspath("../")
 
 
-data_path = os.path.join(ROOT_DIR, 'ccs_dataset_new')
+data_path = os.path.join(ROOT_DIR, 'car_plate_data')
 if not os.path.exists(data_path):
     os.mkdir(data_path)
 
-output_label_txt = os.path.join(ROOT_DIR, 'ccs_dataset_new/label.txt')  
-print(output_label_txt)
-file = open(output_label_txt,'w')
-im_gen = itertools.islice(generate_ims(),30000)
-mean=0
+if not os.path.exists( data_path + "/" + 'train'):
+    os.mkdir(ROOT_DIR + "/car_plate_data/" + 'train')
+if not os.path.exists(data_path + "/" + 'val'):
+    os.mkdir(ROOT_DIR + "/car_plate_data/" + 'val')
+
+    
+labelPath1 = ROOT_DIR+ '/car_plate_data/' + 'train' + "/" + 'via_region_data.json'
+f_labeltxt = open(labelPath1, 'w')
+labelPath2 = ROOT_DIR+ '/car_plate_data/' + 'val' + "/" + 'via_region_data.json'
+f_labeltxt2 = open(labelPath2, 'w')
+
+
+im_gen = itertools.islice(generate_ims(), 30000)
+im_gen_test = itertools.islice(generate_ims(), 3000)
+json_txt_train = {}
+json_txt_test = {}
+
 for img_idx, (out,labels, contours,meanpixel) in enumerate(im_gen):
-    fname =  os.path.join(ROOT_DIR, "ccs_dataset_new/{}.png".format(img_idx) )  
+    label_txt = []
+    for index, label in enumerate(labels):
+        all_points_x = []
+        all_points_y = []
+        curr_img = contours[index]
+        for point in curr_img:
+            all_points_x.append(point.tolist()[1])
+            all_points_y.append(point.tolist()[0])
+        label_txt.append({'shape_attributes': {'name': 'polyline', 'all_points_x':[x[0] for x in all_points_x], 
+                                                        'all_points_y':[x[0] for x in all_points_y]}, 'region_attributes':{'name': label, 'type': label}  })
+
+    fname = ROOT_DIR + "/car_plate_data/"+ 'train' +"/{}_{}.png".format("".join(labels), img_idx)
+    img_name = "{}_{}.png".format("".join(labels), img_idx)
+    print(str(img_idx) + "/" + str(30000) + "-------" +fname)
     cv2.imwrite(fname, out * 255.)
-    #show_contours(out,contours)
-    gen_label(labels,contours,file,"{}.png".format(img_idx))
-    mean=(mean*img_idx+meanpixel)/(img_idx+1)
-    #cv2.imwrite(fname2, plate_mask * 255.)
-file.close()
-print("mean pixel!!!!!!!!!!!",mean)
+    json_txt = {'filename': img_name, 'regions': label_txt}
+    json_txt_train[img_name] = json_txt
+json.dump(json_txt_train, f_labeltxt)
+
+
+for img_idx, (out,labels, contours,meanpixel) in enumerate(im_gen_test):
+    label_txt = []
+    for index, label in enumerate(labels):
+        all_points_x = []
+        all_points_y = []
+        curr_img = contours[index]
+        for point in curr_img:
+            all_points_x.append(point.tolist()[1])
+            all_points_y.append(point.tolist()[0])
+        label_txt.append({'shape_attributes': {'name': 'polyline', 'all_points_x':[x[0] for x in all_points_x], 
+                                                        'all_points_y':[x[0] for x in all_points_y]}, 'region_attributes':{'name': label, 'type': label}  })
+
+    fname = ROOT_DIR + "/car_plate_data/"+ 'val' +"/{}_{}.png".format("".join(labels), img_idx)
+    img_name = "{}_{}.png".format("".join(labels), img_idx)
+    print(str(img_idx) + "/" + str(3000) + "-------" +fname)
+    cv2.imwrite(fname, out * 255.)
+    json_txt = {'filename': img_name, 'regions': label_txt}
+    json_txt_test[img_name] = json_txt
+json.dump(json_txt_test, f_labeltxt2)
+
+
+# im_gen = itertools.islice(generate_ims(), 3000)
+# for img_idx, (plate_mask, im, c, p, label_txt) in enumerate(im_gen):
+#     if label_txt == '0':
+#         print('called')
+#         continue
+#     fname = ROOT_DIR + "/car_plate_data/"+ folder_test +"/{:08d}_{}_{}.png".format(img_idx, c,
+#                                                         "1" if p else "0")
+#     img_name = "{:08d}_{}_{}.png".format(img_idx, c,
+#                                              "1" if p else "0")
+#     fname2 =ROOT_DIR + "/car_plate_data/mask_plate_test/{:08d}_{}_{}.png".format(img_idx, c,
+#                                                          "1" if p else "0")
+#     print(str(img_idx)+ "/" + str(val_number) + "-------"+fname)
+#     json_txt = {'filename': img_name, 'regions': label_txt}
+#     json_txt_test[img_name] = json_txt
+#     cv2.imwrite(fname, im * 255.)
+# json.dump(json_txt_test, f_labeltxt2)
+
+f_labeltxt.close()
+f_labeltxt2.close()
+
+# output_label_txt = '/Users/dmitry/Documents/Business/Projects/ML/MaskRCNNmaster/ccs_dataset/label.txt'
+# file = open(output_label_txt,'w')
+# im_gen = itertools.islice(generate_ims(),30000)
+# mean=0
+
+# json_txt = []
+# for img_idx, (out,labels, contours,meanpixel) in enumerate(im_gen):
+#     fname = "/Users/dmitry/Documents/Business/Projects/ML/MaskRCNNmaster/ccs_dataset/{}.png".format(img_idx)
+#     cv2.imwrite(fname, out * 255.)
+#     for index, label in enumerate(labels):
+#         all_points_x = []
+#         all_points_y = []
+#         curr_img = contours[index]
+#         for point in curr_img:
+
+#             all_points_x.append(point[0])
+#             all_points_y.append(point[1])
+
+#         json_txt.append({'shape_attributes': {'name': 'polyline', 'all_points_x':all_points_x, 
+#                                                         'all_points_y':all_points_y}, 'region_attributes':{'name': label, 'type': label}  })
+    
+    
+#     # show_contours(out,contours)
+
+#     # gen_label(labels,contours,file,"{}.png".format(img_idx))
+#     mean=(mean*img_idx+meanpixel)/(img_idx+1)
+#     #cv2.imwrite(fname2, plate_mask * 255.)
+# file.close()
+# print("mean pixel!!!!!!!!!!!",mean)
+#os.system("python3.5 /home/jianfenghuang/Desktop/Mask_Rcnn/Mask_RCNN-master/PLC_train-white.py ")
+
+
+# im_gen = itertools.islice(generate_ims(), 10000)
+# for img_idx, (out,labels, contours) in enumerate(im_gen):
+#     fname = "Bigscale_val/{:08d}_{}_{}.png".format(img_idx, c,
+#                                            "1" if p else "0")
+#     fname2 = "mask_Bigscale_val/{:08d}_{}_{}.png".format(img_idx, c,
+#                                            "1" if p else "0")
+#     print(fname)
+#     cv2.imwrite(fname, im * 255.)
+#     cv2.imwrite(fname2, plate_mask * 255.)
+
+
+#######
+# generate label
+######
+#import matplotlib.pyplot as plt
+
+#
+#
+#
+# import cv2
+# #生成二值测试图像
+# import os
+#
+#
+# # label for train
+# output_label_txt = '/home/siemens/Documents/GenerateImgs/Bigscale_train/label_data.txt'
+# f_output = open(output_label_txt,'w')
+# img_path = '/home/siemens/Documents/GenerateImgs/mask_Bigscale_train'
+# imgs = os.listdir(img_path)
+# for img_name in imgs:
+#     a=cv2.imread(img_path+'/'+img_name)
+#     img=color.rgb2gray(a)
+#     # if img_name =='model1444.jpg':
+#     #     a=0
+#     # img=color.rgb2gray(data.horse())
+#
+#     #检测所有图形的轮廓
+#     contours = measure.find_contours(img, 0.95)
+#     if len(contours)<1:
+#         continue
+#     edge = contours[0]
+#
+#     # write txt
+#     print(img_name)
+#     f_output.writelines(img_name)
+#     f_output.writelines(' 1')
+#     f_output.writelines(' A ')
+#
+#     pts_num=0
+#     for i in range(len(edge)):
+#         if i%5==0:
+#             pts_num+=1
+#     print('pts_num:', pts_num)
+#     f_output.writelines(str(pts_num))
+#     f_output.writelines(' ')
+#     t1=0
+#     t2=0
+#     for i in range(len(edge)):
+#         if i%5==0:
+#             f_output.writelines(str(int(edge[i,1])))
+#             f_output.writelines(' ')
+#             t1+=1
+#     # print('t1:',t1)
+#     for i in range(len(edge)):
+#         if i % 5 == 0:
+#             f_output.writelines(str(int(edge[i,0])))
+#             f_output.writelines(' ')
+#             t2 += 1
+#     # print('t2:', t2)
+#     f_output.writelines('\n')
+# f_output.close()
+#
+# # label for test
+# output_label_txt = '/home/siemens/Documents/GenerateImgs/Bigscale_val/label_data.txt'
+# f_output = open(output_label_txt,'w')
+# img_path = '/home/siemens/Documents/GenerateImgs/mask_Bigscale_val'
+# imgs = os.listdir(img_path)
+# for img_name in imgs:
+#     a=cv2.imread(img_path+'/'+img_name)
+#     img=color.rgb2gray(a)
+#     # if img_name =='model1444.jpg':
+#     #     a=0
+#     # img=color.rgb2gray(data.horse())
+#
+#     #检测所有图形的轮廓
+#     contours = measure.find_contours(img, 0.95)
+#     if len(contours)<1:
+#         continue
+#     edge = contours[0]
+#
+#     # write txt
+#     print(img_name)
+#     f_output.writelines(img_name)
+#     f_output.writelines(' 1')
+#     f_output.writelines(' A ')
+#
+#     pts_num=0
+#     for i in range(len(edge)):
+#         if i%5==0:
+#             pts_num+=1
+#     print('pts_num:', pts_num)
+#     f_output.writelines(str(pts_num))
+#     f_output.writelines(' ')
+#     t1=0
+#     t2=0
+#     for i in range(len(edge)):
+#         if i%5==0:
+#             f_output.writelines(str(int(edge[i,1])))
+#             f_output.writelines(' ')
+#             t1+=1
+#     # print('t1:',t1)
+#     for i in range(len(edge)):
+#         if i % 5 == 0:
+#             f_output.writelines(str(int(edge[i,0])))
+#             f_output.writelines(' ')
+#             t2 += 1
+#     # print('t2:', t2)
+#     f_output.writelines('\n')
+# f_output.close()
+#
+# ####################
+# # convert to xml
+# ##############
+# import os
+# import numpy as np
+# import sys
+# import cv2
+# from itertools import islice
+# from xml.dom.minidom import Document
+#
+#
+# def create_list(dataName,img_list_txt,img_path,img_name_list_txt,type):
+#    f=open(img_name_list_txt,'w')
+#    fAll=open(img_list_txt,'w')
+#    for name in os.listdir(img_path):
+#       f.write(name[0:-4]+'\n')
+#       fAll.write(dataName+'/'+'JPEGImages'+'/'+type+'/'+name[0:-4]+'.jpg'+' ')
+#       fAll.write(dataName+'/'+'Annotations'+'/'+type+'/'+name[0:-4]+'.xml'+'\n')
+#    f.close()
+# def insertObject(doc, datas):
+#     obj = doc.createElement('object')
+#     name = doc.createElement('name')
+#
+#     name.appendChild(doc.createTextNode(datas[4][0]))
+#     obj.appendChild(name)
+#     bndbox = doc.createElement('bndbox')
+#
+#     xmin = doc.createElement('xmin')
+#     xmin.appendChild(doc.createTextNode(str(datas[0]).strip(' ')))
+#     bndbox.appendChild(xmin)
+#     ymin = doc.createElement('ymin')
+#     ymin.appendChild(doc.createTextNode(str(datas[1]).strip(' ')))
+#     bndbox.appendChild(ymin)
+#     xmax = doc.createElement('xmax')
+#     xmax.appendChild(doc.createTextNode(str(datas[2]).strip(' ')))
+#     bndbox.appendChild(xmax)
+#     ymax = doc.createElement('ymax')
+#     ymax.appendChild(doc.createTextNode(str(datas[3]).strip(' ')))
+#     bndbox.appendChild(ymax)
+#     obj.appendChild(bndbox)
+#     return obj
+#
+#
+# def txt_to_xml(labels_path,xmlpath_path):
+#     # img_name_list=np.loadtxt(img_name_list_txt,dtype=str)
+#     # name_size_file=open(name_size,'w')
+#
+#     label = open(labels_path, 'r')
+#     line = label.readline()
+#     print('--------------------write xml----------------------------')
+#     #
+#     index = 0
+#     while line != "":
+#
+#     # while index == 0:
+#         index = index + 1
+#         print('processed xml:', index)
+#         tag = 1
+#         lines_items = line.split(' ')
+#         img_name = lines_items[0]
+#         obj_num = lines_items[1]
+#         obj_start_index = 2
+#         # obj_pts = 0
+#         # polygons = []
+#         # names = []
+#         flag = 0
+#         for i in range(int(obj_num)):
+#             polygon = {}
+#             polygon['name'] = 'polygon'
+#             obj_name = lines_items[obj_start_index]
+#             #### 2 class
+#             # if len(img_name)==9 and int(img_name[5])>2:
+#             #     obj_name="B"
+#             #     print("A--->B",img_name)
+#             # names.append(obj_name)
+#             obj_pts = int(lines_items[obj_start_index + 1])
+#             polygon['all_points_x'] = [int(lines_items[obj_start_index + 1 + j]) for j in range(1, obj_pts + 1)]
+#             polygon['all_points_y'] = [int(lines_items[obj_start_index + 1 + j]) for j in
+#                                        range(obj_pts + 1, obj_pts * 2 + 1)]
+#
+#             # boundary box x: width
+#             minx = min(polygon['all_points_x'])
+#             miny = min(polygon['all_points_y'])
+#
+#             maxx = max(polygon['all_points_x'])
+#             maxy = max(polygon['all_points_y'])
+#
+#             flag = flag + 1
+#             # data = data.strip('\n')
+#             # datas = data.split(bb_split)
+#             datas = [str(minx),str(miny),str(maxx),str(maxy),'A']
+#             if 5 != len(datas):
+#                 print(img_name + ':bounding box information error')
+#                 exit(-1)
+#             if 1 == flag:
+#                 xml_name = xmlpath_path + img_name[:-4] + '.xml'
+#                 f = open(xml_name, "w")
+#                 doc = Document()
+#                 annotation = doc.createElement('annotation')
+#                 doc.appendChild(annotation)
+#
+#                 folder = doc.createElement('folder')
+#                 folder.appendChild(doc.createTextNode(dataName))
+#                 annotation.appendChild(folder)
+#
+#                 filename = doc.createElement('filename')
+#                 filename.appendChild(doc.createTextNode(img_name + '.jpg'))
+#                 annotation.appendChild(filename)
+#
+#                 size = doc.createElement('size')
+#                 width = doc.createElement('width')
+#                 width.appendChild(doc.createTextNode(str(maxx - minx)))
+#                 size.appendChild(width)
+#                 height = doc.createElement('height')
+#                 height.appendChild(doc.createTextNode(str(maxy - miny)))
+#                 size.appendChild(height)
+#                 depth = doc.createElement('depth')
+#                 depth.appendChild(doc.createTextNode(str(3)))
+#                 size.appendChild(depth)
+#                 annotation.appendChild(size)
+#                 annotation.appendChild(insertObject(doc, datas))
+#             else:
+#                 annotation.appendChild(insertObject(doc, datas))
+#
+#         line = label.readline()
+#
+#         # imageFile = img_path + img_name + '.jpg'
+#         # img = cv2.imread(imageFile)
+#         # imgSize = img.shape
+#         # name_size_file.write(img_name+' '+str(imgSize[0])+' '+str(imgSize[1])+'\n')
+#
+#
+#         # fidin = open(sub_label, 'r')
+#
+#         # for data in islice(fidin, 1, None):
+#
+#         try:
+#             f.write(doc.toprettyxml(indent='    '))
+#             f.close()
+#             # fidin.close()
+#         except:
+#             pass
+#     # name_size_file.close()
+#
+# # generate image names, without '.jpg'
+# def gen_img_names(img_path,img_name_list_txt):
+#     print('generate image names to:',img_name_list_txt)
+#
+#     imgs = os.listdir(img_path)
+#     output = open(img_name_list_txt,'w')
+#     for img in imgs:
+#         output.writelines(img[:-4]+'\n')
+
+#
+# dataName = '/home/siemens/Documents/GenerateImgs/'  # dataset name
+# type = 'train'  # type
+# # type = 'test'  # type
+# bb_split=' '
+# img_path = 'mask_Bigscale_train'  # img path
+# img_name_list_txt = dataName + '/ImageSets/Main/'+type+'.txt'
+# if not os.path.exists(img_name_list_txt):
+#    gen_img_names(img_path,img_name_list_txt)
+# img_list_txt=type+'.txt'
+# # create_list(dataName,img_list_txt,img_path,img_name_list_txt,type)
+# xmlpath_path = dataName+'/Annotations/'
+# labels_path = dataName+'/JPEGImages/' + type + 'label.txt'
+# name_size=type+'_name_size.txt'
+# txt_to_xml(labels_path,xmlpath_path)

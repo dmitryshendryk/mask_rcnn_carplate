@@ -841,9 +841,9 @@ def process(lp_model,char_model,folder_path,show_result=False,log_path=""):
     correct_count=0
     clear_count=0
     correct_clear_count=0
-    file = open("/home/jianfenghuang/Desktop/benchmark_reslut.txt", 'w')
-    c_file=open("/home/jianfenghuang/Desktop/benchmark_reslut_clear.txt", 'w')
-    c_image_pathe="/home/jianfenghuang/Desktop/normal_image"
+    file = open("/home/dmitry/Documents/Projects/mask_rcnn_carplate/benchmark_reslut.txt", 'w')
+    c_file=open("/home/dmitry/Documents/Projects/mask_rcnn_carplate/benchmark_reslut_clear.txt", 'w')
+    c_image_pathe="/home/dmitry/Documents/Projects/mask_rcnn_carplate/normal_image"
     for image_name in image_names:
         if ".png" in image_name or ".jpg" in image_name or ".jepg" in image_name:
             image_dir=folder_path+"/"+image_name
@@ -960,19 +960,19 @@ def process(lp_model,char_model,folder_path,show_result=False,log_path=""):
 
 
 if __name__=="__main__":
-    lp_path="/home/jianfenghuang/Desktop/weights/this_is_the_best_lp_weight_1203.h5"
+    lp_path="/home/dmitry/Documents/Projects/mask_rcnn_carplate/lp_model.h5"
 
     #char_path="/home/jianfenghuang/Desktop/VAL_LOG/PCL_LOGS/plc20181204T1204/mask_rcnn_plc_0189.h5"
-    char_path ="/home/jianfenghuang/Desktop/VAL_LOG/PCL_LOGS/plc20181207T1133/mask_rcnn_plc_0155.h5"
+    char_path ="/home/dmitry/Documents/Projects/mask_rcnn_carplate/mask_rcnn_plc_0999.h5"
     #char_path = "/home/jianfenghuang/Desktop/weights/this_is_the_best_char_weight.h5"
     #char_path ="/home/jianfenghuang/Desktop/weights/best_char_1214.h5"
-    char_path="/home/jianfenghuang/Desktop/weights/mask_rcnn_plc_0513.h5"
+    # char_path="/home/jianfenghuang/Desktop/weights/mask_rcnn_plc_0513.h5"
 
-    char_path="/home/jianfenghuang/Desktop/VAL_LOG/PCL_LOGS/plc20181218T1637/mask_rcnn_plc_0535.h5" #535
-    char_path="/home/jianfenghuang/Desktop/VAL_LOG/PCL_LOGS/plc20181219T1758/mask_rcnn_plc_0300.h5"
+    # char_path="/home/jianfenghuang/Desktop/VAL_LOG/PCL_LOGS/plc20181218T1637/mask_rcnn_plc_0535.h5" #535
+    # char_path="/home/jianfenghuang/Desktop/VAL_LOG/PCL_LOGS/plc20181219T1758/mask_rcnn_plc_0300.h5"
     #char_path='/home/jianfenghuang/Desktop/VAL_LOG/PCL_LOGS/plc20181220T1723/mask_rcnn_plc_0644.h5'
     lp_model,char_model=load_model(lp_path,char_path)
-    results=process(lp_model,char_model,"/home/jianfenghuang/Desktop/benchmark_folder")
+    results=process(lp_model,char_model,"/home/dmitry/Documents/Projects/mask_rcnn_carplate/real_data/benchmark_folder")
     #print ("result .........................")
     # for pairs in results:
     #     print(pairs,results[pairs])

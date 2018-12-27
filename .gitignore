@@ -77,4 +77,4 @@ val_dataset
 data_generator/bgs
 data_generator/bgs_1
 mrcnn
-samples
+ccs_dataset_new

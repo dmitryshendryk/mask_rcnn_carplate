@@ -737,7 +737,7 @@ def train_model(model, subfolder, mode_train):
         model.train(dataset_train, dataset_val,
                     learning_rate=config.LEARNING_RATE,
                     epochs=1000,
-                    layers='heads')
+                    layers='all')
 
 
 

@@ -20,7 +20,6 @@ class EvalCharConfig(Config):
 
 
     NAME = 'chars'
-
     IMAGES_PER_GPU = 1
 
     NUM_CLASSES = 1 + 33
@@ -29,24 +28,26 @@ class EvalCharConfig(Config):
 
     DETECTION_MIN_CONFIDENCE = 0.5
 
-    RPN_ANCHOR_SCALES = (32, 56, 72, 96, 128)
+    RPN_ANCHOR_SCALES = (16, 32, 64, 128, 256)
 
+#    BACKBONE_STRIDES = [2, 4, 8, 16, 32]
     RPN_ANCHOR_RATIOS = [0.3, 0.6, 1]
 
     RPN_TRAIN_ANCHORS_PER_IMAGE = 500
 
-    RPN_NMS_THRESHOLD = 0.6
+    # RPN_NMS_THRESHOLD = 0.6
     
     IMAGE_MIN_DIM = int(480)
     IMAGE_MAX_DIM = int(640)
     
-    POST_NMS_ROIS_INFERENCE = 2000
+    # POST_NMS_ROIS_INFERENCE = 2000
 
     TRAIN_ROIS_PER_IMAGE = 400
 
     MEAN_PIXEL = np.array([0.449122045 * 255, 0.449122045 * 255, 0.449122045 * 255 ])
 
     LEARNING_RATE = 0.005
+
 
 class EvalCarPlateConfig(Config):
 

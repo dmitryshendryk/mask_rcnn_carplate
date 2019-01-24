@@ -27,7 +27,7 @@ project
 └───weights
 │   │   mask_rcnn_plc_0535.h5
 │   │   this_is_the_best_lp_weight_1203.h5
-│   detect.py
+└───detect.py
 ```
 
 

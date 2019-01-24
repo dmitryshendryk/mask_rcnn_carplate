@@ -7,22 +7,23 @@ This is the project for the LPR detection and processing for the HK use case
 ## Project structure 
 
 .
-+-- _api
-|   +-- cron.py
-|   +-- errors.log
-|   +-- ftp_server.py
-|   +-- info.log
-|   +-- logging.json
-|   +-- main.py
-|   +-- mqtt_client.py
-+-- _imgs
-|   +-- folder for images downloaded
-+-- _mrcnn
-|   +-- model-content
-+-- _weights
-|   +-- mask_rcnn_plc_0535.h5
-|   +-- this_is_the_best_lp_weight_1203.h5
-+-- detect.py
++-- _config.yml
++-- _drafts
+|   +-- begin-with-the-crazy-ideas.textile
+|   +-- on-simplicity-in-technology.markdown
++-- _includes
+|   +-- footer.html
+|   +-- header.html
++-- _layouts
+|   +-- default.html
+|   +-- post.html
++-- _posts
+|   +-- 2007-10-29-why-every-programmer-should-play-nethack.textile
+|   +-- 2009-04-26-barcamp-boston-4-roundup.textile
++-- _data
+|   +-- members.yml
++-- _site
++-- index.html
 
 API folder contains the mqtt_client, ftp_client, logging and starting script  
 IMG folder contains images, that will be downloaded from server  

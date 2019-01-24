@@ -24,13 +24,14 @@ This is the project for the LPR detection and processing for the HK use case
 |   +-- this_is_the_best_lp_weight_1203.h5
 +-- detect.py
 
-API folder contains the mqtt_client, ftp_client, logging and starting script *.
-IMG folder contains images, that will be downloaded from server *.
-MRCNN folder contains the MASK-RCNN code *.
-WEIGHTS folder contains the model weights for car plate and numbers *.
-DETECT.py is inference script *.
-ERRORS.log all errors will be logged here *.
-INFO.log all info will be logged here *.
+API folder contains the mqtt_client, ftp_client, logging and starting script  
+IMG folder contains images, that will be downloaded from server  
+MRCNN folder contains the MASK-RCNN code  
+WEIGHTS folder contains the model weights for car plate and numbers  
+DETECT.py is inference script  
+ERRORS.log all errors will be logged here  
+INFO.log all info will be logged here  
+
 
 ## Get Started
 

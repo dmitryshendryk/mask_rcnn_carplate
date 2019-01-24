@@ -41,7 +41,7 @@ libraries on it.
 
 Activate environment 
 
-source activate <your-enrironment> (our example: `` `source activate tensorflow` ``)
+`` `source activate your-enrironment` `` (our example: `` `source activate tensorflow` ``)
 
 ### Step 2
 

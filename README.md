@@ -8,22 +8,29 @@ This is the project for the LPR detection and processing for the HK use case
 
 ```
 project
-│   README.md
-│   file001.txt    
-│
-└───folder1
-│   │   file011.txt
-│   │   file012.txt
+│   README.md   
+└───api
+│   │   cron.py
+│   │   errors.log
+│   │   ftp_server.py
+│   │   info.log
+│   │   logging.json
+│   │   main.py
+│   │   mqtt_client.py
 │   │
-│   └───subfolder1
-│       │   file111.txt
-│       │   file112.txt
-│       │   ...
-│   
-└───folder2
-    │   file021.txt
-    │   file022.txt
+└───mrcnn
+│   │   model-content
+│   │   
+└───imgs
+│   │   folder for images downloaded
+│   │   ...
+└───weights
+│   │   mask_rcnn_plc_0535.h5
+│   │   this_is_the_best_lp_weight_1203.h5
+│   detect.py
 ```
+
+
 API folder contains the mqtt_client, ftp_client, logging and starting script  
 IMG folder contains images, that will be downloaded from server  
 MRCNN folder contains the MASK-RCNN code  
